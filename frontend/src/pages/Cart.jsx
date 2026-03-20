@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { updateQty, removeItem, placeOrder, clearOrderSuccess } from "../redux/slices/cartSlice";
+import StripePayment from "../components/StripePayment";
 
 export default function Cart() {
   const dispatch = useDispatch();
@@ -16,7 +17,21 @@ export default function Cart() {
   const handleCheckout = () => {
     if (!user) { navigate("/login"); return; }
     if (user.isAdmin) { alert("Admins cannot place orders."); return; }
-    dispatch(placeOrder({ items: items.map(i => ({ product: i.product._id, qty: i.qty })), totalPrice: total }));
+    // Payment will be handled by RazorpayPayment component
+  };
+
+  const handlePaymentSuccess = (paymentId) => {
+    const isCOD = paymentId.startsWith("COD_");
+    dispatch(placeOrder({ 
+      items: items.map(i => ({ product: i.product._id, qty: i.qty })), 
+      totalPrice: total,
+      paymentStatus: isCOD ? "pending" : "paid",
+      paymentId 
+    }));
+  };
+
+  const handlePaymentFailure = (error) => {
+    alert(`Payment failed: ${error}`);
   };
 
   if (orderSuccess) return (
@@ -93,14 +108,22 @@ export default function Cart() {
               <p className="free-delivery-hint">🚚 Add ₹{(499 - subtotal).toFixed(0)} more for free delivery!</p>
             )}
             {error && <p style={{ color:"var(--danger)", fontSize:"0.85rem", marginTop:"0.5rem" }}>{error}</p>}
-            <motion.button 
-              whileTap={{ scale: 0.98 }}
-              className="checkout-btn" 
-              onClick={handleCheckout} 
-              disabled={loading || user?.isAdmin}
-            >
-              {user?.isAdmin ? "Admins Cannot Order" : loading ? "Placing Order…" : <>Proceed to Checkout <ArrowRight size={18} style={{ display: 'inline', verticalAlign: 'middle' }}/></>}
-            </motion.button>
+            {user && !user.isAdmin ? (
+              <StripePayment 
+                amount={total} 
+                onSuccess={handlePaymentSuccess}
+                onFailure={handlePaymentFailure}
+              />
+            ) : (
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="checkout-btn" 
+                onClick={handleCheckout} 
+                disabled={loading || user?.isAdmin}
+              >
+                {user?.isAdmin ? "Admins Cannot Order" : loading ? "Placing Order…" : <>Proceed to Checkout <ArrowRight size={18} style={{ display: 'inline', verticalAlign: 'middle' }}/></>}
+              </motion.button>
+            )}
           </div>
         </div>
       )}

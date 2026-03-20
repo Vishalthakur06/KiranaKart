@@ -33,4 +33,19 @@ router.get("/", auth, async (req, res) => {
   res.json(orders);
 });
 
+router.patch("/:id/deliver", auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ message: "Admins only" });
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { deliveryStatus: req.body.deliveryStatus },
+      { new: true }
+    ).populate("user", "name email").populate("items.product", "name price");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

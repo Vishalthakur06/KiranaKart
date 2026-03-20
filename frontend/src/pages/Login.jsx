@@ -9,7 +9,16 @@ export default function Login() {
   const navigate = useNavigate();
   const { loading, error, user } = useSelector(s => s.auth);
   const [tab, setTab]  = useState("login");
-  const [form, setForm] = useState({ name:"", email:"", password:"" });
+  const [form, setForm] = useState({ name:"", email:"", password:"", avatar:"" });
+  const [preview, setPreview] = useState("");
+
+  const onAvatarChange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => { setPreview(reader.result); setForm(f => ({ ...f, avatar: reader.result })); };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (user) navigate("/");
@@ -20,7 +29,7 @@ export default function Login() {
   const onSubmit = e => {
     e.preventDefault();
     if (tab === "login") dispatch(loginUser({ email: form.email, password: form.password }));
-    else dispatch(registerUser({ name: form.name, email: form.email, password: form.password }));
+    else dispatch(registerUser({ name: form.name, email: form.email, password: form.password, avatar: form.avatar }));
   };
 
   return (
@@ -48,13 +57,38 @@ export default function Login() {
         <form onSubmit={onSubmit} className="auth-form">
           <AnimatePresence>
             {tab === "register" && (
-              <motion.input 
-                initial={{ height: 0, opacity: 0, marginBottom: 0 }} 
-                animate={{ height: "auto", opacity: 1, marginBottom: "0.85rem" }} 
-                exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                name="name" type="text" placeholder="Your full name" value={form.name}
-                onChange={onChange} required className="auth-input" 
-              />
+              <motion.div
+                initial={{ height: 0, opacity: 0 }} 
+                animate={{ height: "auto", opacity: 1 }} 
+                exit={{ height: 0, opacity: 0 }}
+                style={{ overflow: "hidden" }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginBottom: "0.85rem" }}>
+                  <label style={{ cursor: "pointer", position: "relative" }}>
+                    <div style={{ width: "80px", height: "80px", borderRadius: "50%", overflow: "hidden", border: "3px solid var(--primary)", boxShadow: "0 4px 12px rgba(249,115,22,0.25)", position: "relative" }}>
+                      <img
+                        src={preview || "https://api.dicebear.com/7.x/thumbs/svg?seed=default&backgroundColor=ffb703"}
+                        alt="avatar"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                      >
+                        <span style={{ color: "#fff", fontSize: "1.4rem" }}>📷</span>
+                      </div>
+                    </div>
+                    <input type="file" accept="image/*" onChange={onAvatarChange} style={{ display: "none" }} />
+                  </label>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Click to change photo</span>
+                </div>
+                <motion.input
+                  initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  name="name" type="text" placeholder="Your full name" value={form.name}
+                  onChange={onChange} required className="auth-input"
+                  style={{ marginBottom: "0.85rem", display: "block", width: "100%" }}
+                />
+              </motion.div>
             )}
           </AnimatePresence>
           <input name="email" type="email" placeholder="Email address" value={form.email}

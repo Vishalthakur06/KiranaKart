@@ -10,9 +10,9 @@ export const saveCartToBackend = createAsyncThunk("cart/save", async (items, { r
   }
 });
 
-export const placeOrder = createAsyncThunk("cart/placeOrder", async ({ items, totalPrice }, { rejectWithValue }) => {
+export const placeOrder = createAsyncThunk("cart/placeOrder", async ({ items, totalPrice, paymentStatus }, { rejectWithValue }) => {
   try {
-    const { data } = await api.post("/orders", { items, totalPrice });
+    const { data } = await api.post("/orders", { items, totalPrice, paymentStatus });
     return data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to place order");
