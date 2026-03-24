@@ -12,11 +12,12 @@ const paymentRoutes = require("./routes/payment");
 const userRoutes = require("./routes/user");
 
 const app = express();
-
 connectDB();
-
 app.use(cors({
-  origin: "https://kirana-kart-beusvmjg8-vshal-thkurs-projects.vercel.app/",
+  origin: [
+    /https:\/\/kiranakart-.*\.vercel\.app$/,
+    "http://localhost:5173"
+  ],
   credentials: true
 }));
 app.use(express.json({ limit: "10mb" }));
