@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-       target: 'https://unrequitable-laraine-nonmetaphorically.ngrok-free.dev',
+        target: 'http://localhost:5002',
         changeOrigin: true,
         secure: false,
       },
