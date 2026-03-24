@@ -9,6 +9,7 @@ const productRoutes = require("./routes/products");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/orders");
 const paymentRoutes = require("./routes/payment");
+const userRoutes = require("./routes/user");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) =>
   res.json({ message: "MERN E-Commerce API running" }),

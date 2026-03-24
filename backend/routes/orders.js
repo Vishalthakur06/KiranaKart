@@ -28,7 +28,7 @@ router.get("/", auth, async (req, res) => {
 
   const orders = await Order.find({ user: req.user._id }).populate(
     "items.product",
-    "name price",
+    "name price image",
   );
   res.json(orders);
 });

@@ -90,7 +90,7 @@ export default function Admin() {
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} style={{ padding: "2rem 0" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 style={{ fontSize: "2rem", fontWeight: 800, background: "linear-gradient(135deg, var(--primary), #f97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "0.25rem" }}>
             🛠️ Admin Dashboard
@@ -154,7 +154,7 @@ export default function Admin() {
                   {msg.text}
                 </div>
               )}
-              <form onSubmit={onAdd} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
+              <form onSubmit={onAdd} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.85rem" }}>
                 <input name="name" className="admin-input" placeholder="Product name" value={form.name} onChange={onChange} required style={{ gridColumn: "1 / -1" }} />
                 <input name="price" className="admin-input" placeholder="Price (₹)" type="number" value={form.price} onChange={onChange} required />
                 <input name="stock" className="admin-input" placeholder="Stock quantity" type="number" value={form.stock} onChange={onChange} required />

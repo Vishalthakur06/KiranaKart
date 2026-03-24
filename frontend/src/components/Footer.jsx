@@ -16,15 +16,15 @@ export default function Footer() {
           <ul>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/cart">Cart</Link></li>
-            <li><Link to="/login">My Account</Link></li>
+            <li><Link to="/wishlist">Wishlist</Link></li>
+            <li><Link to="/orders">My Orders</Link></li>
           </ul>
         </div>
         <div className="footer-links">
-          <h4>Categories</h4>
+          <h4>My Account</h4>
           <ul>
-            <li><Link to="/">Fresh Grains</Link></li>
-            <li><Link to="/">Daily Dairy</Link></li>
-            <li><Link to="/">Snacks & Beverages</Link></li>
+            <li><Link to="/profile">Profile</Link></li>
+            <li><Link to="/login">Login / Register</Link></li>
           </ul>
         </div>
         <div className="footer-links">

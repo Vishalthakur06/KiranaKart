@@ -7,6 +7,8 @@ const userSchema = mongoose.Schema(
     password: { type: String, required: true },
     isAdmin: { type: Boolean, default: false },
     avatar: { type: String, default: "" },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+    compareList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   { timestamps: true },
 );

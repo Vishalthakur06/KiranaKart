@@ -9,6 +9,10 @@ import Product from "./pages/Product";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
+import Orders from "./pages/Orders";
+import Wishlist from "./pages/Wishlist";
+import Profile from "./pages/Profile";
+import { ToastProvider } from "./components/Toast";
 
 /* ── Theme Provider Hook ── */
 function useTheme() {
@@ -34,21 +38,26 @@ function App() {
   const { isDark, toggleDark } = useTheme();
 
   return (
-    <BrowserRouter>
-      <div className="app-container">
-        <NavBar isDark={isDark} toggleDark={toggleDark} />
-        <main className="app-main">
-          <Routes>
-            <Route path="/"           element={<Home />} />
-            <Route path="/product/:id" element={<Product />} />
-            <Route path="/cart"       element={<Cart />} />
-            <Route path="/login"      element={<Login />} />
-            <Route path="/admin"      element={<Admin />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <div className="app-container">
+          <NavBar isDark={isDark} toggleDark={toggleDark} />
+          <main className="app-main">
+            <Routes>
+              <Route path="/"            element={<Home />} />
+              <Route path="/product/:id" element={<Product />} />
+              <Route path="/cart"        element={<Cart />} />
+              <Route path="/login"       element={<Login />} />
+              <Route path="/admin"       element={<Admin />} />
+              <Route path="/orders"      element={<Orders />} />
+              <Route path="/wishlist"    element={<Wishlist />} />
+              <Route path="/profile"     element={<Profile />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 
