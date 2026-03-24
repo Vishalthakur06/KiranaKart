@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart } from "lucide-react";
@@ -70,24 +70,24 @@ export default function NavBar({ isDark, toggleDark }) {
       </motion.button>
 
       <div className="nav-actions">
-        <Link to="/" className="nav-cart-btn"><Home size={18} /> Home</Link>
+        <NavLink to="/" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`} end><Home size={18} /> Home</NavLink>
 
         {user?.isAdmin ? (
-          <Link to="/admin" className="nav-cart-btn" style={{ position: "relative" }} onClick={() => localStorage.setItem("adminLastVisit", new Date().toISOString())}>
+          <NavLink to="/admin" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`} style={{ position: "relative" }} onClick={() => localStorage.setItem("adminLastVisit", new Date().toISOString())}>
             <LayoutDashboard size={18} /> Dashboard
             {newOrders > 0 && (
               <span style={{ position: "absolute", top: "-6px", right: "-6px", background: "#EF4444", color: "#fff", fontSize: "0.65rem", fontWeight: 800, minWidth: "18px", height: "18px", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>{newOrders}</span>
             )}
-          </Link>
+          </NavLink>
         ) : (
           <>
-            <Link to="/cart" className="nav-cart-btn">
+            <NavLink to="/cart" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}>
               <ShoppingCart size={18} /> Cart {totalQty > 0 && <span className="cart-badge">{totalQty}</span>}
-            </Link>
+            </NavLink>
             {user && (
               <>
-                <Link to="/wishlist" className="nav-cart-btn"><Heart size={18} /> Wishlist</Link>
-                <Link to="/orders" className="nav-cart-btn"><Package size={18} /> Orders</Link>
+                <NavLink to="/wishlist" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><Heart size={18} /> Wishlist</NavLink>
+                <NavLink to="/orders" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><Package size={18} /> Orders</NavLink>
               </>
             )}
           </>
@@ -99,19 +99,19 @@ export default function NavBar({ isDark, toggleDark }) {
 
         {user ? (
           <div className="nav-user-info">
-            <Link to="/profile" style={{ display: "flex", alignItems: "center", gap: "0.6rem", textDecoration: "none" }}>
+            <NavLink to="/profile" className={({isActive}) => `nav-profile-link ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.6rem", textDecoration: "none" }}>
               <div style={{ width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.6)" }}>
                 {user.avatar
                   ? <img src={user.avatar} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#fff" }}>{user.name.charAt(0).toUpperCase()}</span>}
               </div>
               <span className="nav-username">{user.name.split(" ")[0]}</span>
-            </Link>
+            </NavLink>
             {user.isAdmin && <span className="nav-admin-pill">Admin</span>}
             <button className="nav-logout-btn" onClick={() => dispatch(logoutUser())}><LogOut size={14} style={{ marginRight: "4px" }} />Logout</button>
           </div>
         ) : (
-          <Link to="/login" className="nav-login-btn"><UserIcon size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Login</Link>
+            <NavLink to="/login" className={({isActive}) => `nav-login-btn ${isActive ? 'active' : ''}`}><UserIcon size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Login</NavLink>
         )}
       </div>
 
@@ -120,29 +120,29 @@ export default function NavBar({ isDark, toggleDark }) {
         {menuOpen && (
           <motion.div initial={{ opacity: 0, x: "100%" }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: "100%" }} transition={{ type: "tween", duration: 0.3 }} className="nav-mobile-menu"
             style={{ position: "fixed", top: "62px", right: 0, bottom: 0, width: "280px", background: "var(--bg-card)", boxShadow: "-4px 0 20px rgba(0,0,0,0.15)", zIndex: 99, padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem", overflowY: "auto" }}>
-            <Link to="/" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+            <NavLink to="/" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
               <Home size={20} /> Home
-            </Link>
+            </NavLink>
 
             {user?.isAdmin ? (
-              <Link to="/admin" onClick={() => { setMenuOpen(false); localStorage.setItem("adminLastVisit", new Date().toISOString()); }} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem", position: "relative" }}>
+              <NavLink to="/admin" onClick={() => { setMenuOpen(false); localStorage.setItem("adminLastVisit", new Date().toISOString()); }} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem", position: "relative" }}>
                 <LayoutDashboard size={20} /> Dashboard
                 {newOrders > 0 && <span style={{ marginLeft: "auto", background: "#EF4444", color: "#fff", fontSize: "0.7rem", fontWeight: 800, minWidth: "20px", height: "20px", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{newOrders}</span>}
-              </Link>
+              </NavLink>
             ) : (
               <>
-                <Link to="/cart" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+                <NavLink to="/cart" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                   <ShoppingCart size={20} /> Cart
                   {totalQty > 0 && <span style={{ marginLeft: "auto", background: "var(--primary)", color: "#fff", fontSize: "0.7rem", fontWeight: 800, minWidth: "20px", height: "20px", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{totalQty}</span>}
-                </Link>
+                </NavLink>
                 {user && (
                   <>
-                    <Link to="/wishlist" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+                    <NavLink to="/wishlist" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                       <Heart size={20} /> Wishlist
-                    </Link>
-                    <Link to="/orders" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+                    </NavLink>
+                    <NavLink to="/orders" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                       <Package size={20} /> Orders
-                    </Link>
+                    </NavLink>
                   </>
                 )}
               </>
@@ -155,7 +155,7 @@ export default function NavBar({ isDark, toggleDark }) {
             <div style={{ borderTop: "1px solid var(--border-color)", marginTop: "0.5rem", paddingTop: "1rem" }}>
               {user ? (
                 <>
-                  <Link to="/profile" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", marginBottom: "0.75rem", textDecoration: "none" }}>
+                  <NavLink to="/profile" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", marginBottom: "0.75rem", textDecoration: "none" }}>
                     <div style={{ width: "40px", height: "40px", borderRadius: "50%", overflow: "hidden", background: "var(--primary-light)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid var(--primary)" }}>
                       {user.avatar
                         ? <img src={user.avatar} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -165,7 +165,7 @@ export default function NavBar({ isDark, toggleDark }) {
                       <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)" }}>{user.name}</div>
                       <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{user.email}</div>
                     </div>
-                  </Link>
+                  </NavLink>
                   {user.isAdmin && (
                     <div style={{ padding: "0.5rem 1rem", background: "var(--accent-light)", color: "var(--accent)", borderRadius: "8px", fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.75rem", textAlign: "center" }}>
                       🔑 Admin Access
@@ -176,9 +176,9 @@ export default function NavBar({ isDark, toggleDark }) {
                   </button>
                 </>
               ) : (
-                <Link to="/login" onClick={() => setMenuOpen(false)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--primary)", color: "#fff", fontWeight: 700, fontSize: "0.95rem" }}>
+                <NavLink to="/login" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--primary)", color: "#fff", fontWeight: 700, fontSize: "0.95rem" }}>
                   <UserIcon size={18} /> Login
-                </Link>
+                </NavLink>
               )}
             </div>
           </motion.div>

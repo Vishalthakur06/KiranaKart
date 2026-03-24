@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpDown } from "lucide-react";
 import { fetchProducts } from "../redux/slices/productSlice";
+import HeroCarousel from "../components/HeroCarousel";
 import ProductCard from "../components/ProductCard";
 import { CATEGORIES, CAT_ICONS, OFFERS } from "../utils/constants";
 import { ProductCardSkeleton } from "../components/Skeleton";
@@ -20,56 +21,37 @@ const SORT_OPTIONS = [
 
 export default function Home() {
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector(s => s.products);
+  const { products, loading, error, total, pages } = useSelector(s => s.products);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [sortBy, setSortBy] = useState("default");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 12;
 
   useEffect(() => { setSearch(searchParams.get("q") || ""); }, [searchParams]);
-  useEffect(() => { dispatch(fetchProducts()); }, [dispatch]);
+  useEffect(() => {
+    const params = {
+      q: search || undefined,
+      category: activeCategory === "All" ? undefined : activeCategory,
+      sort: sortBy,
+      minPrice: minPrice || undefined,
+      maxPrice: maxPrice || undefined,
+      page: page,
+      limit,
+    };
+    dispatch(fetchProducts(params));
+  }, [dispatch, search, activeCategory, sortBy, minPrice, maxPrice, page]);
 
-  const filtered = products
-    .filter(p => {
-      const matchCat = activeCategory === "All" || p.category === activeCategory;
-      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.description || "").toLowerCase().includes(search.toLowerCase());
-      return matchCat && matchSearch;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "price-asc": return a.price - b.price;
-        case "price-desc": return b.price - a.price;
-        case "rating-desc": return (b.rating || 0) - (a.rating || 0);
-        case "newest": return new Date(b.createdAt) - new Date(a.createdAt);
-        case "name-asc": return a.name.localeCompare(b.name);
-        default: return 0;
-      }
-    });
+  const filtered = products || [];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="animate-fade-in">
-      {/* Hero Banner */}
-      <motion.div className="hero-banner" initial={{ y: -50, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: "spring", duration: 0.9, bounce: 0.5 }}>
-        <div className="hero-content">
-          <motion.div className="hero-tag" initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3, type: "spring" }}>
-            🎉 Grand Opening Sale
-          </motion.div>
-          <motion.h1 className="hero-heading" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-            ताज़ा सामान,<br />बेस्ट कीमत!
-          </motion.h1>
-          <motion.p className="hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-            Fresh groceries · Household essentials · Daily needs
-          </motion.p>
-          <motion.div className="hero-coupon" whileHover={{ scale: 1.05, rotate: -2 }} whileTap={{ scale: 0.95 }} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, type: "spring" }}>
-            🏷️ Code <strong>KIRANA10</strong> — 10% off first order!
-          </motion.div>
-        </div>
-        <motion.div className="hero-emoji" initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 15 }} whileHover={{ rotate: 15, scale: 1.1 }}>
-          🛒<br />🥦🧅🥬
-        </motion.div>
-      </motion.div>
+      {/* Hero Carousel */}
+      <HeroCarousel />
 
       {/* Marquee Offers */}
       <motion.div className="offers-strip" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
@@ -89,6 +71,16 @@ export default function Home() {
             <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="search-clear" onClick={() => setSearch("")}>✕</motion.button>
           )}
         </AnimatePresence>
+      </motion.div>
+
+      {/* Price Range */}
+      <motion.div className="price-range" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} style={{ display: "flex", gap: "0.5rem", alignItems: "center", margin: "0.6rem 0" }}>
+        <input type="number" min={0} placeholder="Min price" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ width: 120, padding: "0.45rem 0.6rem", borderRadius: 8, border: "1px solid var(--border-color)" }} />
+        <input type="number" min={0} placeholder="Max price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ width: 120, padding: "0.45rem 0.6rem", borderRadius: 8, border: "1px solid var(--border-color)" }} />
+        <button onClick={() => setPage(1)} style={{ padding: "0.45rem 0.8rem", borderRadius: 8, background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer" }}>Apply</button>
+        {(minPrice || maxPrice) && (
+          <button onClick={() => { setMinPrice(""); setMaxPrice(""); setPage(1); }} style={{ padding: "0.45rem 0.8rem", borderRadius: 8, background: "var(--bg-card)", border: "1px solid var(--border-color)", cursor: "pointer" }}>Clear</button>
+        )}
       </motion.div>
 
       {/* Category Chips */}
@@ -144,6 +136,16 @@ export default function Home() {
         </AnimatePresence>
       </motion.div>
 
+      {/* Pagination */}
+      {!loading && !error && (typeof total !== 'undefined' ? total > 0 : filtered.length > 0) && (
+        <div className="pagination" style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '1.2rem 0' }}>
+          <button className="page-btn" onClick={() => setPage(prev => Math.max(1, prev - 1))} disabled={page <= 1}>Prev</button>
+          {Array.from({ length: pages || 1 }).map((_, i) => (
+            <button key={i} className={`page-btn ${page === i + 1 ? 'active' : ''}`} onClick={() => setPage(i + 1)}>{i + 1}</button>
+          ))}
+          <button className="page-btn" onClick={() => setPage(prev => Math.min(pages || 1, prev + 1))} disabled={page >= (pages || 1)}>Next</button>
+        </div>
+      )}
       {/* Quick View Modal */}
       {quickViewProduct && (
         <QuickView product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />

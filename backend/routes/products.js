@@ -4,8 +4,65 @@ const { auth, admin } = require("../middleware/auth");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const products = await Product.find();
-  res.json(products);
+  try {
+    const { q, category, minPrice, maxPrice, sort, page = 1, limit = 0 } = req.query;
+    const filters = {};
+
+    if (q) {
+      const re = new RegExp(q, "i");
+      filters.$or = [{ name: re }, { description: re }];
+    }
+
+    if (category && category !== "All") {
+      filters.category = category;
+    }
+
+    if (minPrice || maxPrice) {
+      filters.price = {};
+      if (minPrice) filters.price.$gte = Number(minPrice);
+      if (maxPrice) filters.price.$lte = Number(maxPrice);
+    }
+
+    let query = Product.find(filters);
+
+    if (sort) {
+      switch (sort) {
+        case "price-asc":
+          query = query.sort({ price: 1 });
+          break;
+        case "price-desc":
+          query = query.sort({ price: -1 });
+          break;
+        case "rating-desc":
+          query = query.sort({ rating: -1 });
+          break;
+        case "newest":
+          query = query.sort({ createdAt: -1 });
+          break;
+        case "name-asc":
+          query = query.sort({ name: 1 });
+          break;
+        default:
+          break;
+      }
+    }
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const lim = Math.max(0, Number(limit) || 0);
+
+    if (lim > 0) {
+      const total = await Product.countDocuments(filters);
+      const pages = Math.ceil(total / lim) || 1;
+      const skip = (pageNum - 1) * lim;
+      const products = await query.skip(skip).limit(lim).exec();
+      return res.json({ products, total, page: pageNum, pages });
+    }
+
+    const products = await query.exec();
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 router.get("/:id", async (req, res) => {
