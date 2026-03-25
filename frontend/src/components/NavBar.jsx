@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart, GitCompare } from "lucide-react";
+import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart, GitCompare, BarChart3, ChevronDown } from "lucide-react";
 import { logoutUser } from "../redux/slices/authSlice";
 import { useEffect, useState } from "react";
 import api from "../services/api";
@@ -16,6 +16,7 @@ export default function NavBar({ isDark, toggleDark }) {
   const [search, setSearch] = useState("");
   const [focused, setFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userDropdown, setUserDropdown] = useState(false);
 
   const onSearch = e => {
     e.preventDefault();
@@ -85,11 +86,50 @@ export default function NavBar({ isDark, toggleDark }) {
               <ShoppingCart size={18} /> Cart {totalQty > 0 && <span className="cart-badge">{totalQty}</span>}
             </NavLink>
             {user && (
-              <>
-                <NavLink to="/wishlist" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><Heart size={18} /> Wishlist</NavLink>
-                <NavLink to="/compare" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><GitCompare size={18} /> Compare</NavLink>
-                <NavLink to="/orders" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><Package size={18} /> Orders</NavLink>
-              </>
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setUserDropdown(!userDropdown)}
+                  className="nav-cart-btn"
+                  style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.2)", border: "none", color: "#fff", cursor: "pointer", padding: "0.5rem 1rem", borderRadius: "8px", fontFamily: "inherit", fontSize: "0.9rem", fontWeight: 600 }}
+                >
+                  <LayoutDashboard size={18} /> My Account <ChevronDown size={16} style={{ transition: "transform 0.2s", transform: userDropdown ? "rotate(180deg)" : "rotate(0deg)" }} />
+                </button>
+                <AnimatePresence>
+                  {userDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 8px)",
+                        right: 0,
+                        background: "var(--bg-card)",
+                        borderRadius: "12px",
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                        border: "1px solid var(--border-color)",
+                        minWidth: "200px",
+                        zIndex: 1000,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <NavLink to="/dashboard" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
+                        <BarChart3 size={18} /> Dashboard
+                      </NavLink>
+                      <NavLink to="/orders" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
+                        <Package size={18} /> Orders
+                      </NavLink>
+                      <NavLink to="/wishlist" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
+                        <Heart size={18} /> Wishlist
+                      </NavLink>
+                      <NavLink to="/compare" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s", borderTop: "1px solid var(--border-color)" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
+                        <GitCompare size={18} /> Compare
+                      </NavLink>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
           </>
         )}
@@ -99,17 +139,19 @@ export default function NavBar({ isDark, toggleDark }) {
         </motion.button>
 
         {user ? (
-          <div className="nav-user-info">
-            <NavLink to="/profile" className={({isActive}) => `nav-profile-link ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.6rem", textDecoration: "none" }}>
-              <div style={{ width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.6)" }}>
-                {user.avatar
-                  ? <img src={user.avatar} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#fff" }}>{user.name.charAt(0).toUpperCase()}</span>}
-              </div>
-              <span className="nav-username">{user.name.split(" ")[0]}</span>
-            </NavLink>
-            {user.isAdmin && <span className="nav-admin-pill">Admin</span>}
-            <button className="nav-logout-btn" onClick={() => dispatch(logoutUser())}><LogOut size={14} style={{ marginRight: "4px" }} />Logout</button>
+          <div className="nav-user-info" style={{ position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <NavLink to="/profile" className={({isActive}) => `nav-profile-link ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.6rem", textDecoration: "none" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.6)" }}>
+                  {user.avatar
+                    ? <img src={user.avatar} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#fff" }}>{user.name.charAt(0).toUpperCase()}</span>}
+                </div>
+                <span className="nav-username">{user.name.split(" ")[0]}</span>
+              </NavLink>
+              {user.isAdmin && <span className="nav-admin-pill">Admin</span>}
+              <button className="nav-logout-btn" onClick={() => dispatch(logoutUser())}><LogOut size={14} style={{ marginRight: "4px" }} />Logout</button>
+            </div>
           </div>
         ) : (
             <NavLink to="/login" className={({isActive}) => `nav-login-btn ${isActive ? 'active' : ''}`}><UserIcon size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px" }} /> Login</NavLink>
@@ -138,6 +180,9 @@ export default function NavBar({ isDark, toggleDark }) {
                 </NavLink>
                 {user && (
                   <>
+                    <NavLink to="/dashboard" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+                      <BarChart3 size={20} /> Dashboard
+                    </NavLink>
                     <NavLink to="/wishlist" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                       <Heart size={20} /> Wishlist
                     </NavLink>

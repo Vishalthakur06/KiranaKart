@@ -141,10 +141,11 @@ export default function Orders() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                       <Package size={18} color="var(--primary)" />
-                      <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>Order #{order._id.slice(-8).toUpperCase()}</span>
+                      <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-secondary)" }}>Order ID:</span>
+                      <span style={{ fontWeight: 800, fontSize: "1rem", color: "var(--primary)", fontFamily: "monospace", letterSpacing: "0.5px" }}>#{order._id.slice(-6).toUpperCase()}</span>
                     </div>
                     <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                      {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} • {new Date(order.createdAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }} className="order-badges">
