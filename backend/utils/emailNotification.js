@@ -266,30 +266,111 @@ const sendDeliveryStatusEmail = async (orderDetails) => {
   try {
     const useSendGrid = process.env.SENDGRID_API_KEY;
 
+    const statusConfig = {
+      shipped: { 
+        icon: "🚚", 
+        title: "Order Shipped!", 
+        message: "Your order is on the way!",
+        color: "#3B82F6",
+        bg: "#DBEAFE"
+      },
+      delivered: { 
+        icon: "✅", 
+        title: "Order Delivered!", 
+        message: "Your order has been delivered successfully!",
+        color: "#10B981",
+        bg: "#DCFCE7"
+      },
+    };
+
+    const config = statusConfig[orderDetails.status];
+    if (!config) return { success: false };
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+          .container { background: white; border-radius: 12px; padding: 30px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, ${config.color}, ${config.color}dd); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+          .header h1 { margin: 0; font-size: 24px; }
+          .icon { font-size: 48px; text-align: center; margin: 20px 0; }
+          .message-box { background: ${config.bg}; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid ${config.color}; }
+          .message-box h2 { color: ${config.color}; margin: 0 0 10px 0; }
+          .order-id { background: #F9FAFB; padding: 15px; margin: 20px 0; text-align: center; border-radius: 8px; }
+          .footer { text-align: center; color: #6B7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${config.icon} ${config.title}</h1>
+          </div>
+          
+          <div class="icon">${config.icon}</div>
+
+          <div class="message-box">
+            <h2>${config.message}</h2>
+            <p style="margin: 5px 0; color: #6B7280;">Order #${orderDetails.orderId}</p>
+          </div>
+          
+          <div class="order-id">
+            <strong>📦 Order ID: #${orderDetails.orderId}</strong>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for shopping with us!</p>
+            <p style="margin-top: 10px; font-size: 12px;">
+              This is an automated email from E-Commerce Store
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
     if (useSendGrid) {
+      // SendGrid method
       sgMail.setApiKey(process.env.SENDGRID_API_KEY);
       const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER;
-
-      const statusConfig = {
-        shipped: { icon: "🚚", title: "Order Shipped!", color: "#3B82F6" },
-        delivered: { icon: "✅", title: "Order Delivered!", color: "#10B981" },
-      };
-
-      const config = statusConfig[orderDetails.status];
-      if (!config) return { success: false };
 
       await sgMail.send({
         to: orderDetails.customerEmail,
         from: fromEmail,
         subject: `${config.icon} ${config.title} - Order #${orderDetails.orderId}`,
-        html: `<h1>${config.icon} ${config.title}</h1><p>Order #${orderDetails.orderId}</p>`,
+        html,
       });
 
       console.log(`✅ ${config.title} email sent via SendGrid`);
-      return { success: true };
+    } else {
+      // Nodemailer method
+      const emailUser = process.env.EMAIL_USER;
+      const emailPass = process.env.EMAIL_PASS;
+
+      if (!emailUser || !emailPass) {
+        console.log("Email credentials not configured");
+        return { success: false };
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: emailUser, pass: emailPass },
+      });
+
+      await transporter.sendMail({
+        from: `"E-Commerce Store" <${emailUser}>`,
+        to: orderDetails.customerEmail,
+        subject: `${config.icon} ${config.title} - Order #${orderDetails.orderId}`,
+        html,
+      });
+
+      console.log(`✅ ${config.title} email sent via Nodemailer`);
     }
 
-    return { success: false };
+    return { success: true };
   } catch (error) {
     console.error("Delivery status email error:", error);
     return { success: false, error: error.message };
