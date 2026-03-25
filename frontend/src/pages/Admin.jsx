@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, ShoppingBag, TrendingUp, Plus, X, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { Package, ShoppingBag, TrendingUp, Plus, X, ChevronDown, ChevronUp, Search, Upload, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import api from "../services/api";
 import { CATEGORIES, CAT_ICONS } from "../utils/constants";
+import { useToast } from "../components/Toast";
 
 const th = { padding: "12px 16px", textAlign: "left", fontWeight: 700, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", borderBottom: "2px solid var(--border-color)" };
 const td = { padding: "14px 16px", verticalAlign: "top", fontSize: "0.9rem", borderBottom: "1px solid var(--border-color)" };
@@ -18,6 +20,7 @@ const STATUS_STYLE = {
 export default function Admin() {
   const { user } = useSelector(s => s.auth);
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [stats, setStats]         = useState({ products: 0, orders: 0, revenue: 0 });
   const [orders, setOrders]       = useState([]);
@@ -27,9 +30,10 @@ export default function Admin() {
   const [showForm, setShowForm]   = useState(false);
   const [form, setForm]           = useState({ name: "", price: "", description: "", image: "", stock: "", category: "Grains" });
   const [saving, setSaving]       = useState(false);
-  const [msg, setMsg]             = useState({ text: "", ok: true });
   const [activeTab, setActiveTab] = useState("orders");
   const [updating, setUpdating]   = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -52,22 +56,68 @@ export default function Admin() {
     try {
       const { data } = await api.patch(`/orders/${orderId}/deliver`, { deliveryStatus: status });
       setOrders(prev => prev.map(o => o._id === orderId ? { ...o, deliveryStatus: data.deliveryStatus } : o));
+      addToast("Delivery status updated", "success");
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update status");
+      addToast(err.response?.data?.message || "Failed to update status", "error");
     } finally { setUpdating(null); }
   };
+
   const onAdd = async e => {
-    e.preventDefault(); setSaving(true); setMsg({ text: "", ok: true });
+    e.preventDefault(); setSaving(true);
     try {
       await api.post("/products", { ...form, price: Number(form.price), stock: Number(form.stock) });
-      setMsg({ text: "✅ Product added successfully!", ok: true });
+      addToast("Product added successfully!", "success");
       setForm({ name: "", price: "", description: "", image: "", stock: "", category: "Grains" });
       const p = await api.get("/products");
       setStats(s => ({ ...s, products: p.data.length }));
       setTimeout(() => setShowForm(false), 1500);
     } catch (err) {
-      setMsg({ text: err.response?.data?.message || "Failed to add product", ok: false });
+      addToast(err.response?.data?.message || "Failed to add product", "error");
     } finally { setSaving(false); }
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      { name: "Basmati Rice", price: 120, description: "Premium quality basmati rice", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c", stock: 100, category: "Grains" },
+      { name: "Wheat Flour", price: 45, description: "Fresh wheat flour", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b", stock: 200, category: "Grains" },
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products");
+    XLSX.writeFile(wb, "products_template.xlsx");
+    addToast("Template downloaded", "success");
+  };
+
+  const handleBulkUpload = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    addToast("Uploading products...", "info");
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const products = XLSX.utils.sheet_to_json(ws);
+      
+      if (products.length === 0) {
+        addToast("No products found in file", "error");
+        setUploading(false);
+        return;
+      }
+
+      const { data: result } = await api.post("/products/bulk", { products });
+      const msg = result.skipped > 0 
+        ? `🎉 ${result.products.length} products added, ${result.skipped} duplicates skipped!`
+        : `🎉 ${result.products.length} products successfully added to store!`;
+      addToast(msg, "success", 4000);
+      const p = await api.get("/products");
+      setStats(s => ({ ...s, products: p.data.length }));
+    } catch (err) {
+      addToast(err.response?.data?.message || "Failed to upload products", "error");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   };
 
   const filtered = orders
@@ -97,13 +147,28 @@ export default function Admin() {
           </h1>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>Welcome back, {user?.name?.split(" ")[0]} 👋</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
-          onClick={() => { setShowForm(v => !v); setActiveTab("products"); }}
-          style={{ display: "flex", alignItems: "center", gap: "8px", background: "linear-gradient(135deg, var(--primary), #f97316)", color: "#fff", border: "none", borderRadius: "12px", padding: "0.7rem 1.4rem", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer", boxShadow: "0 4px 15px rgba(249,115,22,0.35)" }}
-        >
-          <Plus size={18} /> Add Product
-        </motion.button>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+            onClick={downloadTemplate}
+            style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--bg-card)", color: "var(--primary)", border: "2px solid var(--primary)", borderRadius: "12px", padding: "0.7rem 1.4rem", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}
+          >
+            <Download size={18} /> Template
+          </motion.button>
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            style={{ display: "flex", alignItems: "center", gap: "8px", background: "#10B981", color: "#fff", border: "none", borderRadius: "12px", padding: "0.7rem 1.4rem", fontWeight: 700, fontSize: "0.95rem", cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}
+          >
+            <Upload size={18} /> {uploading ? "Uploading..." : "Bulk Upload"}
+          </motion.button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={handleBulkUpload} style={{ display: "none" }} />
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+            onClick={() => { setShowForm(v => !v); setActiveTab("products"); }}
+            style={{ display: "flex", alignItems: "center", gap: "8px", background: "linear-gradient(135deg, var(--primary), #f97316)", color: "#fff", border: "none", borderRadius: "12px", padding: "0.7rem 1.4rem", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer", boxShadow: "0 4px 15px rgba(249,115,22,0.35)" }}
+          >
+            <Plus size={18} /> Add Product
+          </motion.button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -149,11 +214,6 @@ export default function Admin() {
                 <h2 style={{ fontSize: "1.2rem", fontWeight: 800 }}>➕ Add New Product</h2>
                 <button onClick={() => setShowForm(false)} style={{ background: "var(--bg-secondary, #f3f4f6)", border: "none", borderRadius: "8px", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}><X size={16} /></button>
               </div>
-              {msg.text && (
-                <div style={{ padding: "0.75rem 1rem", borderRadius: "10px", marginBottom: "1rem", fontSize: "0.88rem", fontWeight: 600, background: msg.ok ? "#DCFCE7" : "#FEE2E2", color: msg.ok ? "#15803D" : "#DC2626" }}>
-                  {msg.text}
-                </div>
-              )}
               <form onSubmit={onAdd} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.85rem" }}>
                 <input name="name" className="admin-input" placeholder="Product name" value={form.name} onChange={onChange} required style={{ gridColumn: "1 / -1" }} />
                 <input name="price" className="admin-input" placeholder="Price (₹)" type="number" value={form.price} onChange={onChange} required />
@@ -177,7 +237,6 @@ export default function Admin() {
       {/* Orders Table */}
       {activeTab === "orders" && (
         <div style={{ background: "var(--bg-card)", borderRadius: "20px", border: "1px solid var(--border-color)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", overflow: "hidden" }}>
-          {/* Table Header */}
           <div style={{ padding: "1.5rem 1.5rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
             <h2 style={{ fontSize: "1.15rem", fontWeight: 800 }}>📦 All Orders <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)", marginLeft: "6px" }}>({filtered.length})</span></h2>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -231,39 +290,15 @@ export default function Admin() {
                         <td style={td}>
                           {o.shippingDetails ? (
                             <div style={{ fontSize: "0.82rem", lineHeight: 1.6, minWidth: "200px" }}>
-                              <div style={{ 
-                                display: "flex", 
-                                alignItems: "center", 
-                                gap: "6px", 
-                                marginBottom: "6px",
-                                padding: "6px 10px",
-                                background: "linear-gradient(135deg, #667eea15, #764ba215)",
-                                borderRadius: "8px",
-                                border: "1px solid var(--primary)"
-                              }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", padding: "6px 10px", background: "linear-gradient(135deg, #667eea15, #764ba215)", borderRadius: "8px", border: "1px solid var(--primary)" }}>
                                 <span style={{ fontSize: "1rem" }}>👤</span>
                                 <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>{o.shippingDetails.name}</span>
                               </div>
-                              
-                              <div style={{ 
-                                display: "flex", 
-                                alignItems: "center", 
-                                gap: "6px",
-                                padding: "4px 10px",
-                                background: "var(--bg-secondary, #f9fafb)",
-                                borderRadius: "6px",
-                                marginBottom: "4px"
-                              }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 10px", background: "var(--bg-secondary, #f9fafb)", borderRadius: "6px", marginBottom: "4px" }}>
                                 <span style={{ fontSize: "0.95rem" }}>📱</span>
                                 <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{o.shippingDetails.phone}</span>
                               </div>
-                              
-                              <div style={{ 
-                                padding: "6px 10px",
-                                background: "var(--bg-secondary, #f9fafb)",
-                                borderRadius: "6px",
-                                marginTop: "4px"
-                              }}>
+                              <div style={{ padding: "6px 10px", background: "var(--bg-secondary, #f9fafb)", borderRadius: "6px", marginTop: "4px" }}>
                                 <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
                                   <span style={{ fontSize: "0.95rem", marginTop: "1px" }}>📍</span>
                                   <div style={{ flex: 1 }}>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Trash2, Star } from "lucide-react";
+import { Heart, ShoppingCart, Trash2, GitCompare, Eye } from "lucide-react";
 import { addItem } from "../redux/slices/cartSlice";
 import { useToast } from "../components/Toast";
 import api from "../services/api";
@@ -13,89 +13,173 @@ export default function Wishlist() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const [products, setProducts] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { navigate("/login"); return; }
-    (async () => {
-      try {
-        const { data } = await api.get("/user/wishlist");
-        setProducts(data);
-      } catch { /* */ }
-      finally { setLoading(false); }
-    })();
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    fetchWishlist();
   }, [user, navigate]);
 
-  const remove = async (id) => {
+  const fetchWishlist = async () => {
     try {
-      await api.delete(`/user/wishlist/${id}`);
-      setProducts(p => p.filter(x => x._id !== id));
-      addToast("Removed from wishlist", "info");
+      const { data } = await api.get("/user/wishlist");
+      setWishlist(data);
     } catch (err) {
-      addToast(err.response?.data?.message || "Failed", "error");
+      addToast("Failed to load wishlist", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeFromWishlist = async (productId) => {
+    try {
+      await api.delete(`/user/wishlist/${productId}`);
+      setWishlist(wishlist.filter(p => p._id !== productId));
+      addToast("Removed from wishlist", "success");
+    } catch (err) {
+      addToast("Failed to remove", "error");
     }
   };
 
   const addToCart = (product) => {
-    if (product.stock === 0) { addToast("Out of stock!", "error"); return; }
-    if (cartItems.some(i => i.product._id === product._id)) { addToast("Already in cart!", "info"); return; }
+    if (product.stock === 0) {
+      addToast("Out of stock!", "error");
+      return;
+    }
     dispatch(addItem({ product, qty: 1 }));
     addToast(`${product.name} added to cart!`, "success");
   };
 
+  const addToCompare = async (productId) => {
+    try {
+      await api.post("/user/compare", { productId });
+      addToast("Added to compare list!", "success");
+    } catch (err) {
+      addToast(err.response?.data?.message || "Failed to add", "error");
+    }
+  };
+
+  const isInCart = (productId) => cartItems.some(i => i.product._id === productId);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "4rem" }}>
+        <div className="spinner" style={{ margin: "0 auto" }}></div>
+      </div>
+    );
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: "2rem 0" }}>
-      <div className="page-title-row">
-        <h1 className="page-heading">❤️ My Wishlist</h1>
-        <span style={{ color: "var(--text-secondary)" }}>{products.length} items</span>
+      <div style={{ marginBottom: "2rem" }}>
+        <h1 style={{ fontSize: "2rem", fontWeight: 800, background: "linear-gradient(135deg, #EF4444, #F97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "0.5rem" }}>
+          ❤️ My Wishlist
+        </h1>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+          {wishlist.length} {wishlist.length === 1 ? "item" : "items"} saved
+        </p>
       </div>
 
-      {loading ? (
-        <div className="loader-wrap"><div className="spinner" /><p>Loading wishlist...</p></div>
-      ) : products.length === 0 ? (
-        <div className="state-card">
-          <span style={{ fontSize: "4rem" }}>💝</span>
-          <h3>Your wishlist is empty</h3>
-          <p>Save items you love to buy them later!</p>
-          <Link to="/" className="btn-primary">Browse Products</Link>
+      {wishlist.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "4rem", background: "var(--bg-card)", borderRadius: "20px", border: "1px solid var(--border-color)" }}>
+          <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>💔</div>
+          <h3 style={{ marginBottom: "0.5rem" }}>Your wishlist is empty</h3>
+          <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+            Save your favorite products here!
+          </p>
+          <button onClick={() => navigate("/")} className="btn-primary">Start Shopping</button>
         </div>
       ) : (
         <div className="product-grid">
           <AnimatePresence>
-            {products.map((p, i) => {
-              const inCart = cartItems.some(x => x.product._id === p._id);
-              return (
-                <motion.div key={p._id} className="product-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ delay: i * 0.05 }}>
-                  <Link to={`/product/${p._id}`} className="product-card-img-wrap">
-                    {p.image ? <img src={p.image} alt={p.name} className="product-card-img" /> : <div className="product-card-img-placeholder">🛍️</div>}
-                    {p.rating > 0 && (
-                      <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(255,255,255,0.95)", borderRadius: 12, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4, fontSize: "0.75rem", fontWeight: 700 }}>
-                        <Star size={12} fill="#F59E0B" color="#F59E0B" />{p.rating.toFixed(1)}
-                      </div>
-                    )}
-                  </Link>
-                  <div className="product-card-body">
-                    <Link to={`/product/${p._id}`}><h3 className="product-name">{p.name}</h3></Link>
-                    <p className="product-desc">{p.description || ""}</p>
-                    <div className="product-card-footer">
-                      <span className="product-price">₹{Number(p.price).toFixed(0)}</span>
-                      <span style={{ fontSize: "0.75rem", color: p.stock > 0 ? "var(--secondary)" : "var(--danger)", fontWeight: 600 }}>
-                        {p.stock > 0 ? "In Stock" : "Out of Stock"}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-                      <motion.button whileTap={{ scale: 0.95 }} className={`add-cart-btn ${inCart ? "added" : ""}`} onClick={() => addToCart(p)} disabled={p.stock === 0 || inCart} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-                        <ShoppingCart size={14} />{inCart ? "In Cart" : "Add"}
-                      </motion.button>
-                      <motion.button whileTap={{ scale: 0.9 }} onClick={() => remove(p._id)} style={{ background: "none", border: "1.5px solid var(--danger)", color: "var(--danger)", borderRadius: "var(--radius-md)", padding: "0.4rem 0.6rem", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                        <Trash2 size={14} />
-                      </motion.button>
-                    </div>
+            {wishlist.map((product, idx) => (
+              <motion.div
+                key={product._id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ delay: idx * 0.05 }}
+                className="product-card"
+                style={{ position: "relative" }}
+              >
+                {/* Remove Button */}
+                <button
+                  onClick={() => removeFromWishlist(product._id)}
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    background: "rgba(239, 68, 68, 0.9)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    zIndex: 2,
+                    color: "#fff",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = "scale(1.1)"}
+                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+                >
+                  <Trash2 size={16} />
+                </button>
+
+                <a href={`/product/${product._id}`} className="product-card-img-wrap">
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="product-card-img" />
+                  ) : (
+                    <div className="product-card-img-placeholder">🛍️</div>
+                  )}
+                  {product.category && <span className="product-cat-badge">{product.category}</span>}
+                </a>
+
+                <div className="product-card-body">
+                  <h3 className="product-name">{product.name}</h3>
+                  <p className="product-desc">{product.description || "No description"}</p>
+
+                  <div className="product-card-footer">
+                    <span className="product-price">₹{product.price}</span>
                   </div>
-                </motion.div>
-              );
-            })}
+
+                  {/* Action Buttons */}
+                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+                    <button
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock === 0 || isInCart(product._id)}
+                      className="add-cart-btn"
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+                    >
+                      <ShoppingCart size={16} />
+                      {isInCart(product._id) ? "In Cart" : "Add to Cart"}
+                    </button>
+                    <button
+                      onClick={() => addToCompare(product._id)}
+                      style={{
+                        padding: "0.4rem 0.8rem",
+                        background: "var(--bg-secondary)",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "var(--radius-md)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      <GitCompare size={16} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </AnimatePresence>
         </div>
       )}

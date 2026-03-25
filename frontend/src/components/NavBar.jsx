@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart } from "lucide-react";
+import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart, GitCompare } from "lucide-react";
 import { logoutUser } from "../redux/slices/authSlice";
 import { useEffect, useState } from "react";
 import api from "../services/api";
@@ -87,6 +87,7 @@ export default function NavBar({ isDark, toggleDark }) {
             {user && (
               <>
                 <NavLink to="/wishlist" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><Heart size={18} /> Wishlist</NavLink>
+                <NavLink to="/compare" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><GitCompare size={18} /> Compare</NavLink>
                 <NavLink to="/orders" className={({isActive}) => `nav-cart-btn ${isActive ? 'active' : ''}`}><Package size={18} /> Orders</NavLink>
               </>
             )}
@@ -139,6 +140,9 @@ export default function NavBar({ isDark, toggleDark }) {
                   <>
                     <NavLink to="/wishlist" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                       <Heart size={20} /> Wishlist
+                    </NavLink>
+                    <NavLink to="/compare" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+                      <GitCompare size={20} /> Compare
                     </NavLink>
                     <NavLink to="/orders" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                       <Package size={20} /> Orders

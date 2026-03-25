@@ -84,6 +84,35 @@ router.post("/", auth, admin, async (req, res) => {
   res.status(201).json(product);
 });
 
+router.post("/bulk", auth, admin, async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: "Invalid products array" });
+    }
+    
+    const existingProducts = await Product.find({});
+    const existingNames = new Set(existingProducts.map(p => p.name.toLowerCase()));
+    
+    const uniqueProducts = products.filter(p => !existingNames.has(p.name.toLowerCase()));
+    
+    if (uniqueProducts.length === 0) {
+      return res.status(400).json({ message: "All products already exist" });
+    }
+    
+    const created = await Product.insertMany(uniqueProducts);
+    const skipped = products.length - uniqueProducts.length;
+    
+    res.status(201).json({ 
+      message: `${created.length} products added${skipped > 0 ? `, ${skipped} duplicates skipped` : ''}`, 
+      products: created,
+      skipped 
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.put("/:id", auth, admin, async (req, res) => {
   const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

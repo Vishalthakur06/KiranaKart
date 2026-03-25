@@ -14,6 +14,7 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
 import Checkout from "./pages/Checkout";
+import Compare from "./pages/Compare";
 import { ToastProvider } from "./components/Toast";
 
 /* ── Theme Provider Hook ── */
@@ -55,6 +56,7 @@ function App() {
               <Route path="/admin"       element={<Admin />} />
               <Route path="/orders"      element={<Orders />} />
               <Route path="/wishlist"    element={<Wishlist />} />
+              <Route path="/compare"     element={<Compare />} />
               <Route path="/profile"     element={<Profile />} />
             </Routes>
           </main>
