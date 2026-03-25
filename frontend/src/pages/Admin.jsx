@@ -206,6 +206,7 @@ export default function Admin() {
                   <tr style={{ background: "var(--bg-secondary, #f9fafb)" }}>
                     <th style={th}>#</th>
                     <th style={th}>Customer</th>
+                    <th style={th}>Shipping Details</th>
                     <th style={th}>Items</th>
                     <th style={th}>Total</th>
                     <th style={th}>Payment</th>
@@ -226,6 +227,57 @@ export default function Admin() {
                         <td style={td}>
                           <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{o.user?.name || "—"}</div>
                           <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "2px" }}>{o.user?.email || "—"}</div>
+                        </td>
+                        <td style={td}>
+                          {o.shippingDetails ? (
+                            <div style={{ fontSize: "0.82rem", lineHeight: 1.6, minWidth: "200px" }}>
+                              <div style={{ 
+                                display: "flex", 
+                                alignItems: "center", 
+                                gap: "6px", 
+                                marginBottom: "6px",
+                                padding: "6px 10px",
+                                background: "linear-gradient(135deg, #667eea15, #764ba215)",
+                                borderRadius: "8px",
+                                border: "1px solid var(--primary)"
+                              }}>
+                                <span style={{ fontSize: "1rem" }}>👤</span>
+                                <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>{o.shippingDetails.name}</span>
+                              </div>
+                              
+                              <div style={{ 
+                                display: "flex", 
+                                alignItems: "center", 
+                                gap: "6px",
+                                padding: "4px 10px",
+                                background: "var(--bg-secondary, #f9fafb)",
+                                borderRadius: "6px",
+                                marginBottom: "4px"
+                              }}>
+                                <span style={{ fontSize: "0.95rem" }}>📱</span>
+                                <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{o.shippingDetails.phone}</span>
+                              </div>
+                              
+                              <div style={{ 
+                                padding: "6px 10px",
+                                background: "var(--bg-secondary, #f9fafb)",
+                                borderRadius: "6px",
+                                marginTop: "4px"
+                              }}>
+                                <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                                  <span style={{ fontSize: "0.95rem", marginTop: "1px" }}>📍</span>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ color: "var(--text-primary)", fontWeight: 600, marginBottom: "2px" }}>{o.shippingDetails.address}</div>
+                                    <div style={{ color: "var(--text-secondary)", fontSize: "0.78rem" }}>
+                                      {o.shippingDetails.city}, {o.shippingDetails.state} - <span style={{ fontWeight: 700 }}>{o.shippingDetails.pincode}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>No details</span>
+                          )}
                         </td>
                         <td style={td}>
                           {o.items.map(i => (

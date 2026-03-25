@@ -55,14 +55,18 @@
   --primary-light: #4A1D00;
   --secondary-light: #064E3B;
   --accent-light: #713F12;
-  --bg-main: #121212;
-  --bg-card: #1E1E1E;
-  --bg-secondary: #0F0B09;
+  --bg-main: #0F0F0F;
+  --bg-card: #1A1A1A;
+  --bg-secondary: #252525;
   --header-bg: #1E1E1E;
   --text-primary: #F3F4F6;
   --text-secondary: #9CA3AF;
-  --border-color: #374151;
+  --text-muted: #6B7280;
+  --border-color: #2D2D2D;
   --glass-bg: #1e1e1ecf;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 html {
@@ -384,9 +388,22 @@ button {
 }
 
 .dark .hero-ctrl {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .admin-input,
+.dark .auth-input {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark textarea {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
 }
 
 .hero-dots {

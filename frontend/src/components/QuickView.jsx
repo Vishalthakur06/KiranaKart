@@ -1,9 +1,9 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingCart, Heart, GitCompare, Star } from "lucide-react";
+import { ShoppingCart, Heart, GitCompare, Star } from "lucide-react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem } from "../redux/slices/cartSlice";
 import { useToast } from "./Toast";
+import Modal from "./Modal";
 
 export default function QuickView({ product, onClose }) {
   const dispatch = useDispatch();
@@ -12,6 +12,8 @@ export default function QuickView({ product, onClose }) {
   const { items } = useSelector(s => s.cart);
   const [qty, setQty] = useState(1);
   const [imageZoom, setImageZoom] = useState(false);
+
+  if (!product) return null;
 
   const isInCart = items.some(i => i.product._id === product._id);
 
@@ -25,49 +27,8 @@ export default function QuickView({ product, onClose }) {
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.6)",
-          zIndex: 9998,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "1rem",
-          backdropFilter: "blur(4px)",
-        }}
-      >
-        <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            background: "var(--bg-card)",
-            borderRadius: "24px",
-            maxWidth: "900px",
-            width: "100%",
-            maxHeight: "90vh",
-            overflow: "auto",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-          }}
-        >
-          {/* Header */}
-          <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 800 }}>Quick View</h2>
-            <button onClick={onClose} style={{ background: "var(--bg-secondary)", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}>
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div style={{ padding: "2rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+    <Modal isOpen={true} onClose={onClose} title="Quick View">
+      <div style={{ padding: "2rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }} className="modal-grid">
             {/* Image */}
             <div
               onMouseEnter={() => setImageZoom(true)}
@@ -170,8 +131,6 @@ export default function QuickView({ product, onClose }) {
               </div>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+    </Modal>
   );
 }

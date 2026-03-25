@@ -14,10 +14,10 @@ const ICONS = {
 };
 
 const STYLES = {
-  success: { bg: "#DCFCE7", color: "#15803D", border: "#86EFAC" },
-  error: { bg: "#FEE2E2", color: "#DC2626", border: "#FCA5A5" },
-  info: { bg: "#DBEAFE", color: "#1D4ED8", border: "#93C5FD" },
-  warning: { bg: "#FEF9C3", color: "#A16207", border: "#FDE68A" },
+  success: { bg: "#DCFCE7", color: "#15803D", border: "#86EFAC", darkBg: "rgba(22, 163, 74, 0.2)", darkColor: "#4ADE80", darkBorder: "#16A34A" },
+  error: { bg: "#FEE2E2", color: "#DC2626", border: "#FCA5A5", darkBg: "rgba(239, 68, 68, 0.2)", darkColor: "#FCA5A5", darkBorder: "#EF4444" },
+  info: { bg: "#DBEAFE", color: "#1D4ED8", border: "#93C5FD", darkBg: "rgba(59, 130, 246, 0.2)", darkColor: "#93C5FD", darkBorder: "#3B82F6" },
+  warning: { bg: "#FEF9C3", color: "#A16207", border: "#FDE68A", darkBg: "rgba(234, 179, 8, 0.2)", darkColor: "#FCD34D", darkBorder: "#EAB308" },
 };
 
 export function ToastProvider({ children }) {
@@ -40,6 +40,7 @@ export function ToastProvider({ children }) {
         <AnimatePresence>
           {toasts.map((toast) => {
             const style = STYLES[toast.type];
+            const isDark = document.documentElement.classList.contains("dark");
             return (
               <motion.div
                 key={toast.id}
@@ -47,9 +48,9 @@ export function ToastProvider({ children }) {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 100, scale: 0.8 }}
                 style={{
-                  background: style.bg,
-                  color: style.color,
-                  border: `2px solid ${style.border}`,
+                  background: isDark ? style.darkBg : style.bg,
+                  color: isDark ? style.darkColor : style.color,
+                  border: `2px solid ${isDark ? style.darkBorder : style.border}`,
                   borderRadius: "12px",
                   padding: "1rem 1.25rem",
                   display: "flex",
@@ -64,7 +65,7 @@ export function ToastProvider({ children }) {
                 <span style={{ flex: 1 }}>{toast.message}</span>
                 <button
                   onClick={() => removeToast(toast.id)}
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: style.color, opacity: 0.7 }}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: isDark ? style.darkColor : style.color, opacity: 0.7 }}
                 >
                   <X size={16} />
                 </button>

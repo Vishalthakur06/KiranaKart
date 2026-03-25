@@ -4,6 +4,7 @@ import "./App.css";
 
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Product from "./pages/Product";
 import Cart from "./pages/Cart";
@@ -12,6 +13,7 @@ import Admin from "./pages/Admin";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Profile from "./pages/Profile";
+import Checkout from "./pages/Checkout";
 import { ToastProvider } from "./components/Toast";
 
 /* ── Theme Provider Hook ── */
@@ -40,6 +42,7 @@ function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <div className="app-container">
           <NavBar isDark={isDark} toggleDark={toggleDark} />
           <main className="app-main">
@@ -47,6 +50,7 @@ function App() {
               <Route path="/"            element={<Home />} />
               <Route path="/product/:id" element={<Product />} />
               <Route path="/cart"        element={<Cart />} />
+              <Route path="/checkout"    element={<Checkout />} />
               <Route path="/login"       element={<Login />} />
               <Route path="/admin"       element={<Admin />} />
               <Route path="/orders"      element={<Orders />} />

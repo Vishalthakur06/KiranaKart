@@ -84,11 +84,12 @@ const CheckoutForm = ({ amount, onSuccess, onFailure }) => {
   );
 };
 
-const StripePayment = ({ amount, onSuccess, onFailure }) => {
+const StripePayment = ({ amount, onSuccess, onFailure, disabled = false }) => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [loading, setLoading] = useState(false);
 
   const handleCOD = () => {
+    if (disabled) return;
     setLoading(true);
     setTimeout(() => {
       onSuccess("COD_" + Date.now());
@@ -123,7 +124,7 @@ const StripePayment = ({ amount, onSuccess, onFailure }) => {
       {paymentMethod === "cod" ? (
         <button
           onClick={handleCOD}
-          disabled={loading}
+          disabled={loading || disabled}
           style={{
             padding: "12px 24px",
             backgroundColor: "#28a745",
@@ -132,11 +133,11 @@ const StripePayment = ({ amount, onSuccess, onFailure }) => {
             borderRadius: "8px",
             fontSize: "16px",
             fontWeight: "600",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1,
+            cursor: (loading || disabled) ? "not-allowed" : "pointer",
+            opacity: (loading || disabled) ? 0.6 : 1,
           }}
         >
-          {loading ? "Processing..." : "Place Order (COD)"}
+          {loading ? "Processing..." : disabled ? "Fill Delivery Details" : "Place Order (COD)"}
         </button>
       ) : (
         <Elements stripe={stripePromise}>
