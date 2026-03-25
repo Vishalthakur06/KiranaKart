@@ -15,7 +15,9 @@ const sendOrderNotifications = async (orderDetails) => {
 
     // Create transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: emailUser,
         pass: emailPass,
@@ -227,7 +229,9 @@ const sendDeliveryStatusEmail = async (orderDetails) => {
     }
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: { user: emailUser, pass: emailPass },
     });
 
