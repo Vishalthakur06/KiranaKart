@@ -122,10 +122,22 @@ router.put("/:id", auth, admin, async (req, res) => {
 });
 
 router.delete("/:id", auth, admin, async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) return res.status(404).json({ message: "Product not found" });
-  await product.remove();
   res.json({ message: "Product removed" });
+});
+
+router.post("/bulk-delete", auth, admin, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "Invalid product IDs" });
+    }
+    const result = await Product.deleteMany({ _id: { $in: ids } });
+    res.json({ message: `${result.deletedCount} products deleted`, deletedCount: result.deletedCount });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Add review

@@ -30,7 +30,7 @@ export default function Home() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [page, setPage] = useState(1);
-  const limit = 12;
+  const limit = 15;
 
   useEffect(() => { setSearch(searchParams.get("q") || ""); }, [searchParams]);
   useEffect(() => {

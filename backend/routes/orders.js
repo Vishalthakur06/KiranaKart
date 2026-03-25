@@ -84,4 +84,27 @@ router.patch("/:id/deliver", auth, async (req, res) => {
   }
 });
 
+router.get("/analytics", auth, admin, async (req, res) => {
+  try {
+    const orders = await Order.find().populate("items.product", "name category");
+    const totalRevenue = orders.reduce((sum, o) => sum + o.totalPrice, 0);
+    const monthlyData = {};
+    const categoryData = {};
+    
+    orders.forEach(o => {
+      const month = new Date(o.createdAt).toLocaleDateString("en-IN", { month: "short" });
+      monthlyData[month] = (monthlyData[month] || 0) + o.totalPrice;
+      
+      o.items.forEach(item => {
+        const cat = item.product?.category || "Other";
+        categoryData[cat] = (categoryData[cat] || 0) + (item.product?.price || 0) * item.quantity;
+      });
+    });
+    
+    res.json({ totalRevenue, monthlyData, categoryData, totalOrders: orders.length });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
