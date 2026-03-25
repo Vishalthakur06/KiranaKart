@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { clearCart } from "../redux/slices/cartSlice";
 import { useToast } from "../components/Toast";
+import api from "../services/api";
 
 export default function Checkout() {
   const { items } = useSelector(s => s.cart);
@@ -50,25 +51,13 @@ export default function Checkout() {
         totalPrice: total,
       };
 
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-        body: JSON.stringify(orderData),
-      });
+      const { data } = await api.post("/orders", orderData);
 
-      if (res.ok) {
-        dispatch(clearCart());
-        addToast("Order placed successfully! 🎉", "success");
-        navigate("/orders");
-      } else {
-        const data = await res.json();
-        addToast(data.message || "Order failed. Try again!", "error");
-      }
+      dispatch(clearCart());
+      addToast("Order placed successfully! 🎉", "success");
+      navigate("/orders");
     } catch (err) {
-      addToast("Something went wrong!", "error");
+      addToast(err.response?.data?.message || "Order failed. Try again!", "error");
     } finally {
       setLoading(false);
     }
