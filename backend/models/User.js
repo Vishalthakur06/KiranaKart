@@ -9,6 +9,8 @@ const userSchema = mongoose.Schema(
     avatar: { type: String, default: "" },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     compareList: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { timestamps: true },
 );

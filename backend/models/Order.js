@@ -11,6 +11,7 @@ const orderSchema = mongoose.Schema(
           required: true,
         },
         quantity: { type: Number, required: true, default: 1 },
+        price: { type: Number },
       },
     ],
     shippingDetails: {
@@ -24,13 +25,26 @@ const orderSchema = mongoose.Schema(
     totalPrice: { type: Number, required: true },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
     deliveryStatus: {
       type: String,
-      enum: ["processing", "shipped", "delivered"],
+      enum: ["processing", "shipped", "delivered", "cancelled"],
       default: "processing",
+    },
+    returnRequest: {
+      status: {
+        type: String,
+        enum: ["none", "requested", "approved", "rejected", "completed"],
+        default: "none",
+      },
+      reason: { type: String },
+      description: { type: String },
+      requestedAt: { type: Date },
+      processedAt: { type: Date },
+      refundAmount: { type: Number },
+      adminNote: { type: String },
     },
   },
   { timestamps: true },

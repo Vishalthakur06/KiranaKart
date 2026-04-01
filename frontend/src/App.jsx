@@ -16,6 +16,9 @@ import Profile from "./pages/Profile";
 import Checkout from "./pages/Checkout";
 import Compare from "./pages/Compare";
 import Dashboard from "./pages/Dashboard";
+import Returns from "./pages/Returns";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { ToastProvider } from "./components/Toast";
 
 /* ── Theme Provider Hook ── */
@@ -60,6 +63,9 @@ function App() {
               <Route path="/compare"     element={<Compare />} />
               <Route path="/profile"     element={<Profile />} />
               <Route path="/dashboard"   element={<Dashboard />} />
+              <Route path="/returns"     element={<Returns />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
             </Routes>
           </main>
           <Footer />

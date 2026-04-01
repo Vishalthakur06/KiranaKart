@@ -16,194 +16,31 @@ const sendOrderNotifications = async (orderDetails) => {
   }
 };
 
-// SendGrid method (for production - Render)
 const sendViaSendGrid = async (orderDetails) => {
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER;
     const adminEmail = process.env.ADMIN_EMAIL;
 
-    const adminHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-          .container { background: white; border-radius: 12px; padding: 30px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-          .header { background: linear-gradient(135deg, #F97316, #EF4444); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-          .header h1 { margin: 0; font-size: 24px; }
-          .order-id { background: #FFF7ED; border-left: 4px solid #F97316; padding: 15px; margin: 20px 0; }
-          .order-id strong { color: #F97316; font-size: 18px; }
-          .details { background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid #E5E7EB; }
-          .detail-row:last-child { border-bottom: none; }
-          .detail-label { font-weight: 600; color: #6B7280; width: 140px; }
-          .detail-value { color: #1F2937; flex: 1; }
-          .address-box { background: #ECFDF5; border: 2px solid #10B981; border-radius: 8px; padding: 15px; margin: 20px 0; }
-          .address-box h3 { margin: 0 0 10px 0; color: #10B981; font-size: 16px; }
-          .footer { text-align: center; color: #6B7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
-          .amount { font-size: 28px; font-weight: 800; color: #F97316; text-align: center; margin: 20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🛒 New Order Received!</h1>
-          </div>
-          
-          <div class="order-id">
-            <strong>📦 Order ID: #${orderDetails.orderId}</strong>
-          </div>
+    const adminHTML = `<h1>New Order #${orderDetails.orderId}</h1><p>Amount: ₹${orderDetails.totalAmount}</p>`;
+    const customerHTML = `<h1>Order Confirmed!</h1><p>Thank you ${orderDetails.customerName}!</p>`;
 
-          <div class="amount">
-            💰 ₹${orderDetails.totalAmount}
-          </div>
-
-          <div class="details">
-            <div class="detail-row">
-              <div class="detail-label">👤 Customer:</div>
-              <div class="detail-value">${orderDetails.customerName}</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">📧 Email:</div>
-              <div class="detail-value">${orderDetails.customerEmail}</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">📱 Phone:</div>
-              <div class="detail-value">${orderDetails.customerPhone}</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">💳 Payment:</div>
-              <div class="detail-value">${orderDetails.paymentMethod}</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">🛍️ Items:</div>
-              <div class="detail-value">${orderDetails.itemCount} item(s)</div>
-            </div>
-          </div>
-
-          <div class="address-box">
-            <h3>📍 Delivery Address</h3>
-            <p style="margin: 5px 0; line-height: 1.6;">
-              ${orderDetails.address}<br>
-              ${orderDetails.city}, ${orderDetails.state}<br>
-              PIN: ${orderDetails.pincode}
-            </p>
-          </div>
-
-          <div class="footer">
-            <p>✅ Please check your admin panel for complete order details.</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-              This is an automated notification from your E-Commerce Store
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const customerHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-          .container { background: white; border-radius: 12px; padding: 30px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-          .header { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-          .header h1 { margin: 0; font-size: 24px; }
-          .success-icon { font-size: 48px; text-align: center; margin: 20px 0; }
-          .order-id { background: #ECFDF5; border-left: 4px solid #10B981; padding: 15px; margin: 20px 0; text-align: center; }
-          .order-id strong { color: #10B981; font-size: 18px; }
-          .details { background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid #E5E7EB; }
-          .detail-row:last-child { border-bottom: none; }
-          .detail-label { font-weight: 600; color: #6B7280; width: 140px; }
-          .detail-value { color: #1F2937; flex: 1; }
-          .address-box { background: #FFF7ED; border: 2px solid #F97316; border-radius: 8px; padding: 15px; margin: 20px 0; }
-          .address-box h3 { margin: 0 0 10px 0; color: #F97316; font-size: 16px; }
-          .footer { text-align: center; color: #6B7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
-          .amount { font-size: 28px; font-weight: 800; color: #10B981; text-align: center; margin: 20px 0; }
-          .thank-you { background: #ECFDF5; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
-          .thank-you h2 { color: #10B981; margin: 0 0 10px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>✅ Order Confirmed!</h1>
-          </div>
-          
-          <div class="success-icon">🎉</div>
-
-          <div class="thank-you">
-            <h2>Thank You, ${orderDetails.customerName}!</h2>
-            <p style="margin: 5px 0; color: #6B7280;">Your order has been successfully placed.</p>
-          </div>
-          
-          <div class="order-id">
-            <strong>📦 Order ID: #${orderDetails.orderId}</strong>
-          </div>
-
-          <div class="amount">
-            Total Amount: ₹${orderDetails.totalAmount}
-          </div>
-
-          <div class="details">
-            <div class="detail-row">
-              <div class="detail-label">💳 Payment:</div>
-              <div class="detail-value">${orderDetails.paymentMethod}</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">🛍️ Items:</div>
-              <div class="detail-value">${orderDetails.itemCount} item(s)</div>
-            </div>
-            <div class="detail-row">
-              <div class="detail-label">🚚 Status:</div>
-              <div class="detail-value">Processing</div>
-            </div>
-          </div>
-
-          <div class="address-box">
-            <h3>📍 Delivery Address</h3>
-            <p style="margin: 5px 0; line-height: 1.6;">
-              ${orderDetails.address}<br>
-              ${orderDetails.city}, ${orderDetails.state}<br>
-              PIN: ${orderDetails.pincode}
-            </p>
-          </div>
-
-          <div class="footer">
-            <p>🚚 Your order will be delivered within 2-3 business days.</p>
-            <p style="margin-top: 10px;">📞 For any queries, contact us</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-              This is an automated email from E-Commerce Store
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Send to admin
     if (adminEmail) {
       await sgMail.send({
         to: adminEmail,
         from: fromEmail,
-        subject: `🛒 New Order #${orderDetails.orderId} - ₹${orderDetails.totalAmount}`,
+        subject: `🛒 New Order #${orderDetails.orderId}`,
         html: adminHTML,
       });
-      console.log("✅ Admin email sent via SendGrid");
     }
 
-    // Send to customer
     if (orderDetails.customerEmail) {
       await sgMail.send({
         to: orderDetails.customerEmail,
         from: fromEmail,
-        subject: `✅ Order Confirmed #${orderDetails.orderId} - Thank You!`,
+        subject: `✅ Order Confirmed #${orderDetails.orderId}`,
         html: customerHTML,
       });
-      console.log("✅ Customer email sent via SendGrid");
     }
 
     return { success: true };
@@ -213,7 +50,6 @@ const sendViaSendGrid = async (orderDetails) => {
   }
 };
 
-// Nodemailer method (for local development)
 const sendViaNodemailer = async (orderDetails) => {
   try {
     const emailUser = process.env.EMAIL_USER;
@@ -232,18 +68,15 @@ const sendViaNodemailer = async (orderDetails) => {
       auth: { user: emailUser, pass: emailPass },
     });
 
-    // Send to admin
     if (adminEmail) {
       await transporter.sendMail({
         from: `"E-Commerce Store" <${emailUser}>`,
         to: adminEmail,
-        subject: `🛒 New Order #${orderDetails.orderId} - ₹${orderDetails.totalAmount}`,
+        subject: `🛒 New Order #${orderDetails.orderId}`,
         html: `<h1>New Order #${orderDetails.orderId}</h1><p>Amount: ₹${orderDetails.totalAmount}</p>`,
       });
-      console.log("✅ Admin email sent via Nodemailer");
     }
 
-    // Send to customer
     if (orderDetails.customerEmail) {
       await transporter.sendMail({
         from: `"E-Commerce Store" <${emailUser}>`,
@@ -251,7 +84,6 @@ const sendViaNodemailer = async (orderDetails) => {
         subject: `✅ Order Confirmed #${orderDetails.orderId}`,
         html: `<h1>Order Confirmed!</h1><p>Thank you ${orderDetails.customerName}!</p>`,
       });
-      console.log("✅ Customer email sent via Nodemailer");
     }
 
     return { success: true };
@@ -261,90 +93,99 @@ const sendViaNodemailer = async (orderDetails) => {
   }
 };
 
-// Delivery status email
 const sendDeliveryStatusEmail = async (orderDetails) => {
   try {
     const useSendGrid = process.env.SENDGRID_API_KEY;
-
     const statusConfig = {
-      shipped: { 
-        icon: "🚚", 
-        title: "Order Shipped!", 
-        message: "Your order is on the way!",
-        color: "#3B82F6",
-        bg: "#DBEAFE"
-      },
-      delivered: { 
-        icon: "✅", 
-        title: "Order Delivered!", 
-        message: "Your order has been delivered successfully!",
-        color: "#10B981",
-        bg: "#DCFCE7"
-      },
+      shipped: { icon: "🚚", title: "Order Shipped!" },
+      delivered: { icon: "✅", title: "Order Delivered!" },
     };
 
     const config = statusConfig[orderDetails.status];
     if (!config) return { success: false };
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-          .container { background: white; border-radius: 12px; padding: 30px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-          .header { background: linear-gradient(135deg, ${config.color}, ${config.color}dd); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-          .header h1 { margin: 0; font-size: 24px; }
-          .icon { font-size: 48px; text-align: center; margin: 20px 0; }
-          .message-box { background: ${config.bg}; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid ${config.color}; }
-          .message-box h2 { color: ${config.color}; margin: 0 0 10px 0; }
-          .order-id { background: #F9FAFB; padding: 15px; margin: 20px 0; text-align: center; border-radius: 8px; }
-          .footer { text-align: center; color: #6B7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>${config.icon} ${config.title}</h1>
-          </div>
-          
-          <div class="icon">${config.icon}</div>
+    const html = `<h1>${config.icon} ${config.title}</h1><p>Order #${orderDetails.orderId}</p>`;
 
-          <div class="message-box">
-            <h2>${config.message}</h2>
-            <p style="margin: 5px 0; color: #6B7280;">Order #${orderDetails.orderId}</p>
-          </div>
-          
-          <div class="order-id">
-            <strong>📦 Order ID: #${orderDetails.orderId}</strong>
-          </div>
+    if (useSendGrid) {
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER;
+      await sgMail.send({
+        to: orderDetails.customerEmail,
+        from: fromEmail,
+        subject: `${config.icon} ${config.title}`,
+        html,
+      });
+    } else {
+      const emailUser = process.env.EMAIL_USER;
+      const emailPass = process.env.EMAIL_PASS;
+      if (!emailUser || !emailPass) return { success: false };
 
-          <div class="footer">
-            <p>Thank you for shopping with us!</p>
-            <p style="margin-top: 10px; font-size: 12px;">
-              This is an automated email from E-Commerce Store
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: emailUser, pass: emailPass },
+      });
+
+      await transporter.sendMail({
+        from: `"E-Commerce Store" <${emailUser}>`,
+        to: orderDetails.customerEmail,
+        subject: `${config.icon} ${config.title}`,
+        html,
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Delivery status email error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+const sendReturnRequestEmail = async (orderDetails) => {
+  try {
+    const useSendGrid = process.env.SENDGRID_API_KEY;
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    const userHTML = `
+      <h1>🔄 Return Request Received</h1>
+      <p>Hi ${orderDetails.customerName},</p>
+      <p>We've received your return request for Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}</p>
+      <p><strong>Reason:</strong> ${orderDetails.reason}</p>
+      <p>Our team will review it within 24-48 hours.</p>
+    `;
+
+    const adminHTML = `
+      <h1>⚠️ New Return Request</h1>
+      <p><strong>Customer:</strong> ${orderDetails.customerName} (${orderDetails.customerEmail})</p>
+      <p><strong>Order ID:</strong> #${orderDetails.orderId.toString().slice(-6).toUpperCase()}</p>
+      <p><strong>Amount:</strong> ₹${orderDetails.amount}</p>
+      <p><strong>Reason:</strong> ${orderDetails.reason}</p>
+      <p><strong>Description:</strong> ${orderDetails.description}</p>
     `;
 
     if (useSendGrid) {
-      // SendGrid method
       sgMail.setApiKey(process.env.SENDGRID_API_KEY);
       const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER;
 
       await sgMail.send({
         to: orderDetails.customerEmail,
         from: fromEmail,
-        subject: `${config.icon} ${config.title} - Order #${orderDetails.orderId}`,
-        html,
+        subject: `Return Request Received - Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}`,
+        html: userHTML,
       });
 
-      console.log(`✅ ${config.title} email sent via SendGrid`);
+      if (adminEmail) {
+        await sgMail.send({
+          to: adminEmail,
+          from: fromEmail,
+          subject: `🚨 New Return Request - Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}`,
+          html: adminHTML,
+        });
+      }
+
+      console.log("✅ Return request emails sent via SendGrid");
     } else {
-      // Nodemailer method
       const emailUser = process.env.EMAIL_USER;
       const emailPass = process.env.EMAIL_PASS;
 
@@ -363,18 +204,109 @@ const sendDeliveryStatusEmail = async (orderDetails) => {
       await transporter.sendMail({
         from: `"E-Commerce Store" <${emailUser}>`,
         to: orderDetails.customerEmail,
-        subject: `${config.icon} ${config.title} - Order #${orderDetails.orderId}`,
-        html,
+        subject: `Return Request Received - Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}`,
+        html: userHTML,
       });
 
-      console.log(`✅ ${config.title} email sent via Nodemailer`);
+      if (adminEmail) {
+        await transporter.sendMail({
+          from: `"E-Commerce Store" <${emailUser}>`,
+          to: adminEmail,
+          subject: `🚨 New Return Request - Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}`,
+          html: adminHTML,
+        });
+      }
+
+      console.log("✅ Return request emails sent via Nodemailer");
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Delivery status email error:", error);
+    console.error("Return request email error:", error);
     return { success: false, error: error.message };
   }
 };
 
-module.exports = { sendOrderNotifications, sendDeliveryStatusEmail };
+const sendReturnStatusEmail = async (orderDetails) => {
+  try {
+    const useSendGrid = process.env.SENDGRID_API_KEY;
+
+    const statusConfig = {
+      approved: {
+        icon: "✅",
+        title: "Return Approved!",
+        message: `Your refund of ₹${orderDetails.refundAmount} will be processed within 5-7 business days.`,
+      },
+      rejected: {
+        icon: "❌",
+        title: "Return Request Update",
+        message: `Unfortunately, we cannot process your return request. ${orderDetails.adminNote || ''}`,
+      },
+      completed: {
+        icon: "💰",
+        title: "Refund Completed!",
+        message: `Your refund of ₹${orderDetails.refundAmount} has been processed successfully!`,
+      }
+    };
+
+    const config = statusConfig[orderDetails.status];
+    if (!config) return { success: false };
+
+    const html = `
+      <h1>${config.icon} ${config.title}</h1>
+      <p>Hi ${orderDetails.customerName},</p>
+      <p>${config.message}</p>
+      <p><strong>Order ID:</strong> #${orderDetails.orderId.toString().slice(-6).toUpperCase()}</p>
+    `;
+
+    if (useSendGrid) {
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER;
+
+      await sgMail.send({
+        to: orderDetails.customerEmail,
+        from: fromEmail,
+        subject: `${config.icon} ${config.title} - Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}`,
+        html,
+      });
+
+      console.log(`✅ Return ${orderDetails.status} email sent via SendGrid`);
+    } else {
+      const emailUser = process.env.EMAIL_USER;
+      const emailPass = process.env.EMAIL_PASS;
+
+      if (!emailUser || !emailPass) {
+        console.log("Email credentials not configured");
+        return { success: false };
+      }
+
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: emailUser, pass: emailPass },
+      });
+
+      await transporter.sendMail({
+        from: `"E-Commerce Store" <${emailUser}>`,
+        to: orderDetails.customerEmail,
+        subject: `${config.icon} ${config.title} - Order #${orderDetails.orderId.toString().slice(-6).toUpperCase()}`,
+        html,
+      });
+
+      console.log(`✅ Return ${orderDetails.status} email sent via Nodemailer`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Return status email error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = { 
+  sendOrderNotifications, 
+  sendDeliveryStatusEmail, 
+  sendReturnRequestEmail, 
+  sendReturnStatusEmail 
+};

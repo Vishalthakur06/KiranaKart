@@ -19,6 +19,7 @@ export default function Profile() {
   const [changingPw, setChangingPw] = useState(false);
   const [showPwForm, setShowPwForm] = useState(false);
   const [stats, setStats] = useState({ orders: 0, wishlist: 0 });
+  const [returnNotifications, setReturnNotifications] = useState(0);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -27,11 +28,21 @@ export default function Profile() {
     // Fetch stats
     (async () => {
       try {
-        const [orders, wishlist] = await Promise.all([
+        const [orders, wishlist, returns] = await Promise.all([
           api.get("/orders"),
           api.get("/user/wishlist"),
+          api.get("/returns/my-requests"),
         ]);
         setStats({ orders: orders.data.length, wishlist: wishlist.data.length });
+        
+        // Count unread return notifications (approved/rejected/completed)
+        const lastCheck = localStorage.getItem("lastReturnCheck") || "0";
+        const unreadReturns = returns.data.filter(r => 
+          r.returnRequest.processedAt && 
+          new Date(r.returnRequest.processedAt) > new Date(parseInt(lastCheck)) &&
+          r.returnRequest.status !== "requested"
+        ).length;
+        setReturnNotifications(unreadReturns);
       } catch { /* */ }
     })();
   }, [user, navigate]);
@@ -86,13 +97,59 @@ export default function Profile() {
       <h1 className="page-heading" style={{ marginBottom: "2rem" }}>👤 My Profile</h1>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
         {[
-          { label: "Orders", value: stats.orders, emoji: "📦" },
-          { label: "Wishlist", value: stats.wishlist, emoji: "❤️" },
+          { label: "Orders", value: stats.orders, emoji: "📦", link: "/orders" },
+          { label: "Wishlist", value: stats.wishlist, emoji: "❤️", link: "/wishlist" },
+          { label: "Returns", value: "View", emoji: "🔄", link: "/returns" },
           { label: "Member Since", value: new Date(user.id ? Date.now() : Date.now()).toLocaleDateString("en-IN", { month: "short", year: "numeric" }), emoji: "📅" },
         ].map(s => (
-          <div key={s.label} style={{ background: "var(--bg-card)", borderRadius: "var(--radius-lg)", padding: "1.25rem", textAlign: "center", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-sm)" }}>
+          <div 
+            key={s.label} 
+            onClick={() => {
+              if (s.link) {
+                if (s.label === "Returns") {
+                  localStorage.setItem("lastReturnCheck", Date.now().toString());
+                  setReturnNotifications(0);
+                }
+                navigate(s.link);
+              }
+            }}
+            style={{ 
+              background: "var(--bg-card)", 
+              borderRadius: "var(--radius-lg)", 
+              padding: "1.25rem", 
+              textAlign: "center", 
+              border: "1px solid var(--border-color)", 
+              boxShadow: "var(--shadow-sm)",
+              cursor: s.link ? "pointer" : "default",
+              transition: "all 0.3s ease",
+              position: "relative"
+            }}
+            onMouseEnter={(e) => s.link && (e.currentTarget.style.transform = "translateY(-4px)", e.currentTarget.style.boxShadow = "var(--shadow-md)")}
+            onMouseLeave={(e) => s.link && (e.currentTarget.style.transform = "translateY(0)", e.currentTarget.style.boxShadow = "var(--shadow-sm)")}
+          >
+            {s.label === "Returns" && returnNotifications > 0 && (
+              <span style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                background: "#EF4444",
+                color: "#fff",
+                fontSize: "0.7rem",
+                fontWeight: 800,
+                minWidth: "20px",
+                height: "20px",
+                borderRadius: "9999px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0 6px",
+                boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)"
+              }}>
+                {returnNotifications}
+              </span>
+            )}
             <div style={{ fontSize: "1.5rem", marginBottom: "0.25rem" }}>{s.emoji}</div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text-primary)" }}>{s.value}</div>
             <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 600 }}>{s.label}</div>

@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart, GitCompare, BarChart3, ChevronDown } from "lucide-react";
+import { Sun, Moon, ShoppingCart, User as UserIcon, LogOut, LayoutDashboard, Package, Search, X, Home, Menu, Heart, GitCompare, BarChart3, ChevronDown, RotateCcw } from "lucide-react";
 import { logoutUser } from "../redux/slices/authSlice";
 import { useEffect, useState } from "react";
 import api from "../services/api";
@@ -123,8 +123,11 @@ export default function NavBar({ isDark, toggleDark }) {
                       <NavLink to="/wishlist" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
                         <Heart size={18} /> Wishlist
                       </NavLink>
-                      <NavLink to="/compare" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s", borderTop: "1px solid var(--border-color)" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
+                      <NavLink to="/compare" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
                         <GitCompare size={18} /> Compare
+                      </NavLink>
+                      <NavLink to="/returns" onClick={() => setUserDropdown(false)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0.75rem 1rem", color: "var(--text-primary)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, transition: "background 0.2s", borderTop: "1px solid var(--border-color)" }} onMouseEnter={e => e.target.style.background = "var(--bg-secondary)"} onMouseLeave={e => e.target.style.background = "transparent"}>
+                        <RotateCcw size={18} /> Returns
                       </NavLink>
                     </motion.div>
                   )}
@@ -191,6 +194,9 @@ export default function NavBar({ isDark, toggleDark }) {
                     </NavLink>
                     <NavLink to="/orders" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
                       <Package size={20} /> Orders
+                    </NavLink>
+                    <NavLink to="/returns" onClick={() => setMenuOpen(false)} className={({isActive}) => `nav-mobile-item ${isActive ? 'active' : ''}`} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1rem", borderRadius: "12px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.95rem" }}>
+                      <RotateCcw size={20} /> Returns
                     </NavLink>
                   </>
                 )}

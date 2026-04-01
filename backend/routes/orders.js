@@ -46,14 +46,21 @@ router.get("/", auth, async (req, res) => {
   if (req.user.isAdmin) {
     const orders = await Order.find()
       .populate("user", "name email")
-      .populate("items.product", "name price");
+      .populate("items.product", "name price")
+      .sort({ createdAt: -1 });
     return res.json(orders);
   }
 
-  const orders = await Order.find({ user: req.user._id }).populate(
-    "items.product",
-    "name price image",
-  );
+  const orders = await Order.find({ user: req.user._id })
+    .populate("items.product", "name price image")
+    .sort({ createdAt: -1 });
+  res.json(orders);
+});
+
+router.get("/my-orders", auth, async (req, res) => {
+  const orders = await Order.find({ user: req.user._id })
+    .populate("items.product", "name price image")
+    .sort({ createdAt: -1 });
   res.json(orders);
 });
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { Package, Clock, Truck, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, Clock, Truck, CheckCircle, ChevronDown, ChevronUp, Download, Mail } from "lucide-react";
 import api from "../services/api";
 
 const DELIVERY_ICONS = {
@@ -32,6 +32,8 @@ export default function Orders() {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [expandedItems, setExpandedItems] = useState(null);
   const [expandedTimeline, setExpandedTimeline] = useState(null);
+  const [downloading, setDownloading] = useState(null);
+  const [emailing, setEmailing] = useState(null);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
@@ -57,6 +59,53 @@ export default function Orders() {
     processing: orders.filter(o => o.deliveryStatus === "processing").length,
     shipped: orders.filter(o => o.deliveryStatus === "shipped").length,
     delivered: orders.filter(o => o.deliveryStatus === "delivered").length,
+  };
+
+  const downloadInvoice = async (orderId) => {
+    setDownloading(orderId);
+    try {
+      const response = await fetch(`http://localhost:5002/api/invoice/download/${orderId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      
+      if (!response.ok) throw new Error("Failed to download");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${orderId.slice(-6).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      alert("Failed to download invoice");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const emailInvoice = async (orderId) => {
+    setEmailing(orderId);
+    try {
+      const response = await fetch(`http://localhost:5002/api/invoice/email/${orderId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert("Invoice sent to your email!");
+      } else {
+        alert(data.message || "Failed to send email");
+      }
+    } catch (error) {
+      alert("Failed to send invoice");
+    } finally {
+      setEmailing(null);
+    }
   };
 
   return (
@@ -369,6 +418,65 @@ export default function Orders() {
                         </div>
                       </motion.div>
                     )}
+                  </div>
+
+                  {/* Invoice Buttons */}
+                  <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => downloadInvoice(order._id)}
+                      disabled={downloading === order._id}
+                      style={{
+                        flex: 1,
+                        minWidth: "150px",
+                        padding: "0.75rem 1.25rem",
+                        background: "linear-gradient(135deg, var(--primary), #f97316)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "12px",
+                        fontWeight: 700,
+                        fontSize: "0.9rem",
+                        cursor: downloading === order._id ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        opacity: downloading === order._id ? 0.7 : 1,
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      <Download size={18} />
+                      {downloading === order._id ? "Downloading..." : "Download Invoice"}
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => emailInvoice(order._id)}
+                      disabled={emailing === order._id}
+                      style={{
+                        flex: 1,
+                        minWidth: "150px",
+                        padding: "0.75rem 1.25rem",
+                        background: "var(--bg-card)",
+                        color: "var(--primary)",
+                        border: "2px solid var(--primary)",
+                        borderRadius: "12px",
+                        fontWeight: 700,
+                        fontSize: "0.9rem",
+                        cursor: emailing === order._id ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        opacity: emailing === order._id ? 0.7 : 1,
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      <Mail size={18} />
+                      {emailing === order._id ? "Sending..." : "Email Invoice"}
+                    </motion.button>
                   </div>
                 </div>
               </motion.div>

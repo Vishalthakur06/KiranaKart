@@ -39,6 +39,8 @@ export default function Admin() {
   const [updating, setUpdating]   = useState(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting]   = useState(null);
+  const [returnRequests, setReturnRequests] = useState([]);
+  const [newReturns, setNewReturns] = useState(0);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -46,13 +48,32 @@ export default function Admin() {
     localStorage.setItem("adminLastVisit", new Date().toISOString());
     (async () => {
       try {
-        const [p, o, a] = await Promise.all([api.get("/products"), api.get("/orders"), api.get("/orders/analytics")]);
+        const [p, o, a, r] = await Promise.all([
+          api.get("/products"), 
+          api.get("/orders"), 
+          api.get("/orders/analytics"),
+          api.get("/returns/requests")
+        ]);
         const rev = o.data.reduce((s, o) => s + (o.totalPrice || 0), 0);
         setStats({ products: p.data.length, orders: o.data.length, revenue: rev.toFixed(0) });
         setOrders(o.data);
         setProducts(Array.isArray(p.data) ? p.data : p.data.products || []);
         setAnalytics(a.data);
-      } catch { /* non-admin */ }
+        
+        console.log("🔍 All Return Requests:", r.data);
+        setReturnRequests(r.data || []);
+        
+        // Count new return requests - simplified logic
+        const requestedReturns = (r.data || []).filter(req => {
+          console.log("Return:", req._id, "Status:", req.returnRequest.status);
+          return req.returnRequest.status === "requested";
+        });
+        
+        console.log("✅ Requested Returns Count:", requestedReturns.length);
+        setNewReturns(requestedReturns.length);
+      } catch (err) { 
+        console.error("❌ Error fetching data:", err);
+      }
       finally { setLoading(false); }
     })();
   }, [user, navigate]);
@@ -228,17 +249,51 @@ export default function Admin() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "4px", background: "var(--bg-secondary, #f3f4f6)", borderRadius: "12px", padding: "4px", marginBottom: "1.5rem", width: "fit-content" }}>
-        {["analytics", "inventory", "orders", "products"].map(tab => (
-          <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "products") setShowForm(true); }}
-            style={{ padding: "0.5rem 1.4rem", borderRadius: "10px", border: "none", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s",
-              background: activeTab === tab ? "var(--bg-card)" : "transparent",
-              color: activeTab === tab ? "var(--primary)" : "var(--text-secondary)",
-              boxShadow: activeTab === tab ? "0 2px 8px rgba(0,0,0,0.1)" : "none"
+        {["analytics", "inventory", "orders", "returns", "products"].map(tab => {
+          const isReturnsTab = tab === "returns";
+          const showBadge = isReturnsTab && newReturns > 0;
+          
+          console.log(`Tab: ${tab}, isReturnsTab: ${isReturnsTab}, newReturns: ${newReturns}, showBadge: ${showBadge}`);
+          
+          return (
+            <button key={tab} onClick={() => { 
+              setActiveTab(tab); 
+              if (tab === "products") setShowForm(true);
             }}
-          >
-            {tab === "analytics" ? "📊 Analytics" : tab === "inventory" ? "📦 Inventory" : tab === "orders" ? "🚚 Orders" : "🛒 Products"}
-          </button>
-        ))}
+              style={{ padding: "0.5rem 1.4rem", borderRadius: "10px", border: "none", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s",
+                background: activeTab === tab ? "var(--bg-card)" : "transparent",
+                color: activeTab === tab ? "var(--primary)" : "var(--text-secondary)",
+                boxShadow: activeTab === tab ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
+                position: "relative"
+              }}
+            >
+              {tab === "analytics" ? "📊 Analytics" : tab === "inventory" ? "📦 Inventory" : tab === "orders" ? "🚚 Orders" : tab === "returns" ? "🔄 Returns" : "🛒 Products"}
+              {showBadge && (
+                <span style={{
+                  position: "absolute",
+                  top: "-8px",
+                  right: "-8px",
+                  background: "#EF4444",
+                  color: "#fff",
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  minWidth: "22px",
+                  height: "22px",
+                  borderRadius: "9999px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0 6px",
+                  boxShadow: "0 4px 12px rgba(239, 68, 68, 0.5)",
+                  border: "2px solid var(--bg-secondary, #f3f4f6)",
+                  zIndex: 100
+                }}>
+                  {newReturns}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Add Product Form */}
@@ -847,6 +902,133 @@ export default function Admin() {
                             <Trash2 size={14} /> {deleting === p._id ? "Deleting..." : "Delete"}
                           </motion.button>
                         </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+      {/* Returns Management */}
+      {activeTab === "returns" && (
+        <div style={{ background: "var(--bg-card)", borderRadius: "20px", border: "1px solid var(--border-color)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)", overflow: "hidden" }}>
+          <div style={{ padding: "1.5rem 1.5rem 1rem" }}>
+            <h2 style={{ fontSize: "1.15rem", fontWeight: 800 }}>🔄 Return Requests <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)", marginLeft: "6px" }}>({returnRequests.length})</span></h2>
+          </div>
+          {returnRequests.length === 0 ? (
+            <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔄</div>
+              <p style={{ fontWeight: 600 }}>No return requests yet</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "var(--bg-secondary, #f9fafb)" }}>
+                    <th style={th}>Order ID</th>
+                    <th style={th}>Customer</th>
+                    <th style={th}>Amount</th>
+                    <th style={th}>Reason</th>
+                    <th style={th}>Description</th>
+                    <th style={th}>Status</th>
+                    <th style={th}>Requested</th>
+                    <th style={th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {returnRequests.map((order, idx) => (
+                    <motion.tr key={order._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.02 }}
+                      style={{ transition: "background 0.15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--bg-secondary, #f9fafb)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <td style={td}>
+                        <span style={{ fontWeight: 700, color: "var(--primary)" }}>#{order._id.slice(-6).toUpperCase()}</span>
+                      </td>
+                      <td style={td}>
+                        <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>{order.user?.name || "—"}</div>
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "2px" }}>{order.user?.email || "—"}</div>
+                      </td>
+                      <td style={{ ...td, fontWeight: 800, color: "#10B981", fontSize: "1rem" }}>₹{order.totalPrice?.toLocaleString("en-IN")}</td>
+                      <td style={td}>
+                        <span style={{ padding: "4px 10px", borderRadius: "6px", background: "var(--bg-secondary, #f3f4f6)", fontSize: "0.82rem", fontWeight: 600 }}>
+                          {order.returnRequest.reason}
+                        </span>
+                      </td>
+                      <td style={{ ...td, maxWidth: "200px" }}>
+                        <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {order.returnRequest.description}
+                        </div>
+                      </td>
+                      <td style={td}>
+                        <span style={{
+                          padding: "4px 12px", borderRadius: "20px", fontWeight: 700, fontSize: "0.82rem", whiteSpace: "nowrap",
+                          background: order.returnRequest.status === "requested" ? "#FEF3C7" : order.returnRequest.status === "approved" ? "#DCFCE7" : order.returnRequest.status === "rejected" ? "#FEE2E2" : "#DBEAFE",
+                          color: order.returnRequest.status === "requested" ? "#92400E" : order.returnRequest.status === "approved" ? "#15803D" : order.returnRequest.status === "rejected" ? "#DC2626" : "#1D4ED8"
+                        }}>
+                          {order.returnRequest.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ ...td, color: "var(--text-secondary)", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                        {new Date(order.returnRequest.requestedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </td>
+                      <td style={td}>
+                        {order.returnRequest.status === "requested" && (
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              onClick={async () => {
+                                try {
+                                  await api.put(`/returns/process/${order._id}`, { action: "approve", refundAmount: order.totalPrice });
+                                  addToast("Return approved!", "success");
+                                  const { data } = await api.get("/returns/requests");
+                                  setReturnRequests(data || []);
+                                } catch (err) {
+                                  addToast(err.response?.data?.message || "Failed", "error");
+                                }
+                              }}
+                              style={{ padding: "6px 12px", background: "#DCFCE7", color: "#15803D", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}
+                            >
+                              ✅ Approve
+                            </motion.button>
+                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                              onClick={async () => {
+                                try {
+                                  await api.put(`/returns/process/${order._id}`, { action: "reject", adminNote: "Cannot process return" });
+                                  addToast("Return rejected", "success");
+                                  const { data } = await api.get("/returns/requests");
+                                  setReturnRequests(data || []);
+                                } catch (err) {
+                                  addToast(err.response?.data?.message || "Failed", "error");
+                                }
+                              }}
+                              style={{ padding: "6px 12px", background: "#FEE2E2", color: "#DC2626", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}
+                            >
+                              ❌ Reject
+                            </motion.button>
+                          </div>
+                        )}
+                        {order.returnRequest.status === "approved" && (
+                          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={async () => {
+                              try {
+                                await api.put(`/returns/complete/${order._id}`);
+                                addToast("Refund completed!", "success");
+                                const { data } = await api.get("/returns/requests");
+                                setReturnRequests(data || []);
+                              } catch (err) {
+                                addToast(err.response?.data?.message || "Failed", "error");
+                              }
+                            }}
+                            style={{ padding: "6px 12px", background: "#DBEAFE", color: "#1D4ED8", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "0.82rem" }}
+                          >
+                            💰 Complete Refund
+                          </motion.button>
+                        )}
+                        {(order.returnRequest.status === "rejected" || order.returnRequest.status === "completed") && (
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>No action needed</span>
+                        )}
                       </td>
                     </motion.tr>
                   ))}

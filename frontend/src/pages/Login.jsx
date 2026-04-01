@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { loginUser, registerUser, clearAuthError } from "../redux/slices/authSlice";
@@ -95,6 +95,23 @@ export default function Login() {
             onChange={onChange} required className="auth-input" />
           <input name="password" type="password" placeholder="Password" value={form.password}
             onChange={onChange} required className="auth-input" />
+          
+          {tab === "login" && (
+            <div style={{ textAlign: "right", marginBottom: "0.75rem" }}>
+              <Link
+                to="/forgot-password"
+                style={{
+                  color: "var(--primary)",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
+          )}
+          
           <motion.button whileTap={{ scale: 0.98 }} type="submit" className="btn-primary auth-submit" disabled={loading}>
             {loading ? "Please wait…" : tab === "login" ? "Sign In" : "Create Account"}
           </motion.button>
